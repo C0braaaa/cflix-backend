@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import { CONNECT_DB } from "./config/mongodb";
 import { env } from "./config/environment";
 import { APIs_V1 } from "./routes/v1";
@@ -9,11 +10,18 @@ const START_SERVER = () => {
   // Đọc JSON body từ FE
   app.use(express.json());
 
+  app.use(
+    cors({
+      origin: "http://localhost:5000", // frontend
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
   // Prefix chung cho API v1
   app.use("/v1", APIs_V1);
 
   app.listen(env.APP_PORT, env.APP_HOST, async () => {
-
     console.log(
       `Hello Hieu C0bra Dev, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`
     );

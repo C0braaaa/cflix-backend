@@ -1,14 +1,9 @@
 import express from "express";
-import {StatusCodes} from 'http-status-codes';
+import { authValidation } from "~/validations/authValidations";
+import { authController } from "~/controllers/authController";
 
 const Router = express.Router();
 
-Router.route('/')
-    .get((req, res) => {
-        res.status(StatusCodes.OK).json({mesage: 'Get user from database.'})
-    })
-    .post((req, res) => {
-        res.status(StatusCodes.CREATED).json({mesage: 'Add new user to database.'})
-    })
+Router.post("/login", authValidation.login, authController.login);
 
 export const authRoute = Router;
