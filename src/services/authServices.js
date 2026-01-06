@@ -108,7 +108,32 @@ const register = async (reqBody) => {
   } catch (error) {}
 };
 
+//update profile
+const update = async (userId, regBody) => {
+  try {
+    const updateData = {
+      username: regBody.username,
+      gender: regBody.gender,
+      avatar_url: regBody.avatar_url,
+    };
+
+    // loc bo nhung truong undefined
+    Object.keys(updateData).forEach((key) => {
+      updateData[key] === undefined && delete updateData[key];
+    });
+
+    //Goi model update
+    const updatedUser = await authModels.updateUser(userId, updateData);
+
+    if (updateData) delete updateData.password;
+
+    return updatedUser;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   register,
+  update,
 };

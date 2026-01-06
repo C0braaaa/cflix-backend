@@ -3,12 +3,16 @@ import cors from "cors";
 import { CONNECT_DB } from "./config/mongodb";
 import { env } from "./config/environment";
 import { APIs_V1 } from "./routes/v1";
+import cookieParser from "cookie-parser";
 
 const START_SERVER = () => {
   const app = express();
 
   // Đọc JSON body từ FE
   app.use(express.json());
+
+  // Đọc cookie
+  app.use(cookieParser());
 
   app.use(
     cors({

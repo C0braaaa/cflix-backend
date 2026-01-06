@@ -56,8 +56,28 @@ const register = async (req, res) => {
   }
 };
 
+//update
+const update = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const updateUser = await authServices.update(userId, req.body);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Update successfully",
+      user: updateUser,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
 export const authController = {
   login,
   logout,
   register,
+  update,
 };

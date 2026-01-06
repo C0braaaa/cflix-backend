@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { GET_DB } from "~/config/mongodb";
+import { ObjectId } from "mongodb";
 
 const USER_COLLECTION_NAME = "users";
 
@@ -54,9 +55,31 @@ const createNewUser = async (user) => {
   }
 };
 
+// update user
+const updateUser = async (id, data) => {
+  try {
+    const db = await GET_DB();
+    if (data._id) delete data._id;
+
+    const updateData = { ...data, updatedAt: Date.now() };
+
+    const result = await db
+      .collection(USER_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updateData },
+        { returnDocument: "after" }
+      );
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const authModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
   findOneByEmail,
   createNewUser,
+  updateUser,
 };

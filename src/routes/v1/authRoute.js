@@ -1,11 +1,13 @@
 import express from "express";
 import { authValidation } from "~/validations/authValidations";
 import { authController } from "~/controllers/authController";
+import { authMiddleware } from "~/middlewares/authMiddleware";
 
 const Router = express.Router();
 
 Router.post("/login", authValidation.login, authController.login);
 Router.post("/register", authValidation.register, authController.register);
+Router.put("/update", authMiddleware.verifyToken, authController.update);
 Router.post("/logout", authController.logout);
 
 export const authRoute = Router;
