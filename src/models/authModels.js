@@ -61,7 +61,7 @@ const updateUser = async (id, data) => {
     const db = await GET_DB();
     if (data._id) delete data._id;
 
-    const updateData = { ...data, updatedAt: Date.now() };
+    const updateData = { ...data, updatedAt: new Date() };
 
     const result = await db
       .collection(USER_COLLECTION_NAME)
@@ -76,10 +76,43 @@ const updateUser = async (id, data) => {
   }
 };
 
+// get all users
+const getAllUsers = async ({ keyword, role, is_active }) => {
+  try {
+    const query = {};
+
+    if (keyword) {
+      const regex = { $regex: keyword, $options: "i" };
+
+      query.$or = [{ username: regex }, { email: regex }];
+    }
+    if (role) {
+      query.role = role;
+    }
+
+    if (is_active !== undefined) {
+      query.isActive = is_active === "true";
+    }
+
+    const db = await GET_DB();
+    const users = await db
+      .collection(USER_COLLECTION_NAME)
+      .find(query)
+      .project({ password: 0 })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return users;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const authModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
   findOneByEmail,
   createNewUser,
   updateUser,
+  getAllUsers,
 };

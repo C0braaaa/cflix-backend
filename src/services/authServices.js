@@ -115,6 +115,8 @@ const update = async (userId, regBody) => {
       username: regBody.username,
       gender: regBody.gender,
       avatar_url: regBody.avatar_url,
+      role: regBody.role,
+      isActive: regBody.isActive,
     };
 
     // loc bo nhung truong undefined
@@ -132,8 +134,18 @@ const update = async (userId, regBody) => {
     throw error;
   }
 };
+
+const getAllUSers = async (filters) => {
+  try {
+    const users = await authModels.getAllUsers(filters);
+    return users;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   register,
   update,
+  getAllUSers,
 };

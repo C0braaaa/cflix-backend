@@ -1,5 +1,7 @@
 import { StatusCodes } from "http-status-codes";
 import { authServices } from "~/services/authServices";
+import jwt from "jsonwebtoken";
+import { env } from "~/config/environment";
 
 const login = async (req, res) => {
   try {
@@ -19,7 +21,6 @@ const login = async (req, res) => {
       user: result.data,
     });
   } catch (error) {
-    console.log("🔥 Lỗi chi tiết:", error);
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
@@ -61,12 +62,45 @@ const update = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const updateUser = await authServices.update(userId, req.body);
+    const updatedUser = await authServices.update(userId, req.body);
+
+    if (!updatedUser) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    // create newToken (refresh token)
+    const userInfo = {
+      _id: updatedUser._id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      avatar_url: updatedUser.avatar_url,
+      gender: updatedUser.gender,
+      isActive: updatedUser.isActive,
+      playlist: updatedUser.playlist,
+      continue_watching: updatedUser.continue_watching,
+      favorite: updatedUser.favorite,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+    };
+
+    const newAccessToken = jwt.sign(userInfo, env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Update successfully",
-      user: updateUser,
+      user: updatedUser,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -75,9 +109,69 @@ const update = async (req, res) => {
   }
 };
 
+// update user by ID for Admin
+const updateUserByID = async (req, res) => {
+  try {
+    const { _id } = req.params;
+    const data = req.body;
+
+    const updatedUser = authServices.update(_id, data);
+
+    if (!updatedUser) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Update successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const getMe = async (req, res) => {
+  try {
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Get user info successfully",
+      user: req.user,
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// get all users
+const getAllUSers = async (req, res) => {
+  try {
+    const { keyword, role, is_active } = req.query;
+
+    const users = await authServices.getAllUSers({ keyword, role, is_active });
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Get all users successfully",
+      users: users,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 export const authController = {
   login,
   logout,
   register,
   update,
+  getMe,
+  getAllUSers,
+  updateUserByID,
 };
