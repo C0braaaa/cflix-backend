@@ -77,9 +77,13 @@ const updateUser = async (id, data) => {
 };
 
 // get all users
-const getAllUsers = async ({ keyword, role, is_active }) => {
+const getAllUsers = async ({ keyword, role, is_active, currentId }) => {
   try {
     const query = {};
+
+    if (currentId) {
+      query._id = { $ne: new ObjectId(currentId) };
+    }
 
     if (keyword) {
       const regex = { $regex: keyword, $options: "i" };
@@ -108,11 +112,65 @@ const getAllUsers = async ({ keyword, role, is_active }) => {
   }
 };
 
+const findOneById = async (id) => {
+  try {
+    const db = await GET_DB();
+    const user = await db
+      .collection(USER_COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(id) }, { projection: { password: 0 } });
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// add favorite movie
+const toggleFavorite = async (userId, movieData) => {
+  try {
+    const db = await GET_DB();
+    const user = await db.collection(USER_COLLECTION_NAME).findOne({
+      _id: new ObjectId(userId),
+    });
+
+    const isExist = user.favorite.find((item) => item.slug === movieData.slug);
+
+    if (isExist) {
+      await db
+        .collection(USER_COLLECTION_NAME)
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $pull: { favorite: { slug: movieData.slug } } }
+        );
+      return { status: "removed", slug: movieData.slug };
+    } else {
+      const newItem = {
+        id: new ObjectId(),
+        slug: movieData.slug,
+        name: movieData.name,
+        origin_name: movieData.origin_name,
+        poster_url: movieData.poster_url,
+      };
+      await db
+        .collection(USER_COLLECTION_NAME)
+        .updateOne(
+          { _id: new ObjectId(userId) },
+          { $push: { favorite: newItem } }
+        );
+
+      return { status: "added", newItem };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const authModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
   findOneByEmail,
+  findOneById,
   createNewUser,
   updateUser,
   getAllUsers,
+  toggleFavorite,
 };

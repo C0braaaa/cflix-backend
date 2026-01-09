@@ -112,10 +112,10 @@ const update = async (req, res) => {
 // update user by ID for Admin
 const updateUserByID = async (req, res) => {
   try {
-    const { _id } = req.params;
+    const { id } = req.params;
     const data = req.body;
 
-    const updatedUser = authServices.update(_id, data);
+    const updatedUser = await authServices.update(id, data);
 
     if (!updatedUser) {
       return res.status(StatusCodes.NOT_FOUND).json({
@@ -137,10 +137,13 @@ const updateUserByID = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
+    const userId = req.user._id;
+    const user = await authServices.getDetailUser(userId);
+
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Get user info successfully",
-      user: req.user,
+      user: user,
     });
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -154,11 +157,41 @@ const getAllUSers = async (req, res) => {
   try {
     const { keyword, role, is_active } = req.query;
 
-    const users = await authServices.getAllUSers({ keyword, role, is_active });
+    const currentId = req.user._id;
+
+    const users = await authServices.getAllUSers({
+      keyword,
+      role,
+      is_active,
+      currentId,
+    });
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Get all users successfully",
       users: users,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// add favorite movie
+const toggleFavorite = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const movieData = req.body;
+
+    const result = await authServices.toggleFavorite(userId, movieData);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg:
+        result.status === "added"
+          ? "Đã thêm vào yêu thích"
+          : "Đã xóa khỏi yêu thích",
+      result: result,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -174,4 +207,5 @@ export const authController = {
   getMe,
   getAllUSers,
   updateUserByID,
+  toggleFavorite,
 };

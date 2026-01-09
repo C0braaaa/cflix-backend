@@ -143,9 +143,37 @@ const getAllUSers = async (filters) => {
     throw error;
   }
 };
+
+const getDetailUser = async (userId) => {
+  try {
+    const user = await authModels.findOneById(userId);
+
+    if (!user) {
+      throw {
+        code: StatusCodes.NOT_FOUND,
+        message: "User not found",
+      };
+    }
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// add favorite movie
+const toggleFavorite = async (userId, movieData) => {
+  try {
+    const rs = await authModels.toggleFavorite(userId, movieData);
+    return rs;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   register,
   update,
+  getDetailUser,
   getAllUSers,
+  toggleFavorite,
 };

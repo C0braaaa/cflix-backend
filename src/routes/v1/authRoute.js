@@ -20,5 +20,10 @@ Router.get(
   authController.getAllUSers
 );
 Router.post("/logout", authController.logout);
+Router.post(
+  "/favorite",
+  authMiddleware.verifyToken,
+  authController.toggleFavorite
+);
 
 export const authRoute = Router;
