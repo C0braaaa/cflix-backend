@@ -164,6 +164,78 @@ const toggleFavorite = async (userId, movieData) => {
   }
 };
 
+const togglePlaylist = async (userId, movieData) => {
+  try {
+    const db = await GET_DB();
+    const user = await db.collection(USER_COLLECTION_NAME).findOne({
+      _id: new ObjectId(userId),
+    });
+
+    const exist = user.playlist.find((item) => item.slug === movieData.slug);
+
+    if (exist) {
+      await db.collection(USER_COLLECTION_NAME).updateOne(
+        {
+          _id: new ObjectId(userId),
+        },
+        {
+          $pull: { playlist: { slug: movieData.slug } },
+        }
+      );
+      return { status: "removed", slug: movieData.slug };
+    } else {
+      const newItem = {
+        id: new ObjectId(),
+        slug: movieData.slug,
+        name: movieData.name,
+        origin_name: movieData.origin_name,
+        poster_url: movieData.poster_url,
+      };
+      await db.collection(USER_COLLECTION_NAME).updateOne(
+        {
+          _id: new ObjectId(userId),
+        },
+        { $push: { playlist: newItem } }
+      );
+      return { status: "added", newItem };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateContinueWatching = async (userId, movieData) => {
+  try {
+    const db = await GET_DB();
+    await db
+      .collection(USER_COLLECTION_NAME)
+      .updateOne(
+        { _id: new ObjectId(userId) },
+        { $pull: { continue_watching: { slug: movieData.slug } } }
+      );
+
+    const newItem = {
+      ...movieData,
+      updatedAt: new Date(),
+    };
+
+    const result = await db.collection(USER_COLLECTION_NAME).updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $push: {
+          continue_watching: {
+            $each: [newItem],
+            $position: 0,
+          },
+        },
+      }
+    );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
@@ -173,4 +245,6 @@ export const authModels = {
   updateUser,
   getAllUsers,
   toggleFavorite,
+  togglePlaylist,
+  updateContinueWatching,
 };

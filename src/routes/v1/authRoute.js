@@ -25,5 +25,15 @@ Router.post(
   authMiddleware.verifyToken,
   authController.toggleFavorite
 );
+Router.post(
+  "/playlist",
+  authMiddleware.verifyToken,
+  authController.togglePlaylist
+);
 
+Router.post(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  authController.saveProgress
+);
 export const authRoute = Router;

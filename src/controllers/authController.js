@@ -12,6 +12,7 @@ const login = async (req, res) => {
       httpOnly: true,
       secure: false, // localhost dể false, prod để true
       sameSite: "lax",
+      path: "/",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
@@ -79,9 +80,9 @@ const update = async (req, res) => {
       avatar_url: updatedUser.avatar_url,
       gender: updatedUser.gender,
       isActive: updatedUser.isActive,
-      playlist: updatedUser.playlist,
-      continue_watching: updatedUser.continue_watching,
-      favorite: updatedUser.favorite,
+      // playlist: updatedUser.playlist,
+      // continue_watching: updatedUser.continue_watching,
+      // favorite: updatedUser.favorite,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
     };
@@ -94,6 +95,7 @@ const update = async (req, res) => {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
+      path: "/",
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -199,6 +201,46 @@ const toggleFavorite = async (req, res) => {
     });
   }
 };
+
+const togglePlaylist = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const movieData = req.body;
+
+    const result = await authServices.togglePlaylist(userId, movieData);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg:
+        result.status === "added"
+          ? "Đã thêm vào danh sách xem sau"
+          : "Đã xóa khỏi danh sách xem sau",
+      result: result,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const saveProgress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const movieData = req.body;
+
+    await authServices.saveProgress(userId, movieData);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Lưu tiến trình thành công",
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 export const authController = {
   login,
   logout,
@@ -208,4 +250,6 @@ export const authController = {
   getAllUSers,
   updateUserByID,
   toggleFavorite,
+  togglePlaylist,
+  saveProgress,
 };

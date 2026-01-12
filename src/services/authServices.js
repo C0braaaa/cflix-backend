@@ -40,9 +40,9 @@ const login = async (regBody) => {
       avatar_url: existUser.avatar_url,
       gender: existUser.gender,
       isActive: existUser.isActive,
-      playlist: existUser.playlist,
-      continue_watching: existUser.continue_watching,
-      favorite: existUser.favorite,
+      // playlist: existUser.playlist,
+      // continue_watching: existUser.continue_watching,
+      // favorite: existUser.favorite,
       createAt: existUser.createdAt,
       updateAt: existUser.updatedAt,
     };
@@ -169,6 +169,22 @@ const toggleFavorite = async (userId, movieData) => {
     throw error;
   }
 };
+
+const togglePlaylist = async (userId, movieData) => {
+  try {
+    const rs = await authModels.togglePlaylist(userId, movieData);
+    return rs;
+  } catch (error) {}
+};
+
+const saveProgress = async (userId, movieData) => {
+  try {
+    const rs = await authModels.updateContinueWatching(userId, movieData);
+    return rs;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   register,
@@ -176,4 +192,6 @@ export const authServices = {
   getDetailUser,
   getAllUSers,
   toggleFavorite,
+  togglePlaylist,
+  saveProgress,
 };

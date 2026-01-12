@@ -18,6 +18,8 @@ export const authMiddleware = {
 
       next();
     } catch (error) {
+      console.log(error);
+
       return res.status(StatusCodes.UNAUTHORIZED).json({
         message: "Unauthorized",
       });
