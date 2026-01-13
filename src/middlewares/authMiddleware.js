@@ -25,4 +25,18 @@ export const authMiddleware = {
       });
     }
   },
+  verifyAdmin: (req, res, next) => {
+    if (!req.user) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: "Ban chua dang nhap!",
+      });
+    }
+    if (req.user.role === "admin") {
+      next();
+    } else {
+      return res.status(StatusCodes.FORBIDDEN).json({
+        message: "Ban khong co quyen truy cap!",
+      });
+    }
+  },
 };

@@ -16,6 +16,13 @@ const login = async (regBody) => {
       };
     }
 
+    if (existUser._destroy) {
+      throw {
+        code: StatusCodes.FORBIDDEN,
+        message: "Tài khoản đã bị xóa",
+      };
+    }
+
     if (!existUser.isActive) {
       throw {
         code: StatusCodes.FORBIDDEN,
@@ -185,6 +192,34 @@ const saveProgress = async (userId, movieData) => {
     throw error;
   }
 };
+
+const removeContinueWatching = async (userId, movileSlug) => {
+  return await authModels.removeContinueWatching(userId, movileSlug);
+};
+
+const deleteUser = async (userId) => {
+  try {
+    const existUser = await authModels.findOneById(userId);
+
+    if (!existUser) {
+      throw {
+        code: StatusCodes.NOT_FOUND,
+        message: "User khong ton tai!",
+      };
+    }
+    if (existUser.role === "admin") {
+      throw {
+        code: StatusCodes.FORBIDDEN,
+        message: "Khong the xoa tai khoan admin!",
+      };
+    }
+
+    const rs = await authModels.deleteUser(userId);
+    return rs;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   register,
@@ -194,4 +229,6 @@ export const authServices = {
   toggleFavorite,
   togglePlaylist,
   saveProgress,
+  removeContinueWatching,
+  deleteUser,
 };

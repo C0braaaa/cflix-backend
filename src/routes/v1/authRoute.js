@@ -11,6 +11,7 @@ Router.put("/update", authMiddleware.verifyToken, authController.update);
 Router.put(
   "/admin/update/:id",
   authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
   authController.updateUserByID
 );
 Router.get("/me", authMiddleware.verifyToken, authController.getMe);
@@ -35,5 +36,18 @@ Router.post(
   "/continue-watching",
   authMiddleware.verifyToken,
   authController.saveProgress
+);
+
+Router.delete(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  authController.removeContinueWatching
+);
+
+Router.delete(
+  "/user/:id",
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  authController.deleteUser
 );
 export const authRoute = Router;

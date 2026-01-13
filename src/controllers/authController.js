@@ -241,6 +241,40 @@ const saveProgress = async (req, res) => {
     });
   }
 };
+
+const removeContinueWatching = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { slug } = req.body;
+
+    await authServices.removeContinueWatching(userId, slug);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Đã xóa khỏi tiếp tục xem",
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// delete user (soft delete)
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await authServices.deleteUser(id);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Xóa người dùng thành công",
+      result: result,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 export const authController = {
   login,
   logout,
@@ -252,4 +286,6 @@ export const authController = {
   toggleFavorite,
   togglePlaylist,
   saveProgress,
+  removeContinueWatching,
+  deleteUser,
 };

@@ -79,7 +79,9 @@ const updateUser = async (id, data) => {
 // get all users
 const getAllUsers = async ({ keyword, role, is_active, currentId }) => {
   try {
-    const query = {};
+    const query = {
+      _destroy: false,
+    };
 
     if (currentId) {
       query._id = { $ne: new ObjectId(currentId) };
@@ -150,12 +152,17 @@ const toggleFavorite = async (userId, movieData) => {
         origin_name: movieData.origin_name,
         poster_url: movieData.poster_url,
       };
-      await db
-        .collection(USER_COLLECTION_NAME)
-        .updateOne(
-          { _id: new ObjectId(userId) },
-          { $push: { favorite: newItem } }
-        );
+      await db.collection(USER_COLLECTION_NAME).updateOne(
+        { _id: new ObjectId(userId) },
+        {
+          $push: {
+            favorite: {
+              $each: [newItem],
+              $position: 0,
+            },
+          },
+        }
+      );
 
       return { status: "added", newItem };
     }
@@ -195,7 +202,14 @@ const togglePlaylist = async (userId, movieData) => {
         {
           _id: new ObjectId(userId),
         },
-        { $push: { playlist: newItem } }
+        {
+          $push: {
+            playlist: {
+              $each: [newItem],
+              $position: 0,
+            },
+          },
+        }
       );
       return { status: "added", newItem };
     }
@@ -236,6 +250,39 @@ const updateContinueWatching = async (userId, movieData) => {
     throw error;
   }
 };
+
+const removeContinueWatching = async (userId, movileSlug) => {
+  try {
+    const db = await GET_DB();
+    const result = await db.collection(USER_COLLECTION_NAME).updateOne(
+      {
+        _id: new ObjectId(userId),
+      },
+      { $pull: { continue_watching: { slug: movileSlug } } }
+    );
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// delete user (soft delete)
+const deleteUser = async (id) => {
+  try {
+    const db = await GET_DB();
+
+    const result = await db
+      .collection(USER_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: { _destroy: true, updatedAt: new Date() } },
+        { returnDocument: "after" }
+      );
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
 export const authModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
@@ -247,4 +294,6 @@ export const authModels = {
   toggleFavorite,
   togglePlaylist,
   updateContinueWatching,
+  removeContinueWatching,
+  deleteUser,
 };
