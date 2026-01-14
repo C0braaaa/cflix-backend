@@ -10,4 +10,5 @@ export const env = {
   APP_PORT: process.env.APP_PORT,
   JWT_SECRET: process.env.JWT_SECRET,
   CLIENT_URL: process.env.CLIENT_URL,
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
 };

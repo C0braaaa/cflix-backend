@@ -2,30 +2,21 @@ import express from "express";
 import { authValidation } from "~/validations/authValidations";
 import { authController } from "~/controllers/authController";
 import { authMiddleware } from "~/middlewares/authMiddleware";
+import { authLimiter, commonLimiter } from "~/middlewares/rateLimitMiddleware";
 
 const Router = express.Router();
 
-Router.post("/login", authValidation.login, authController.login);
-Router.post("/register", authValidation.register, authController.register);
-Router.put("/update", authMiddleware.verifyToken, authController.update);
-Router.put(
-  "/admin/update/:id",
-  authMiddleware.verifyToken,
-  authMiddleware.verifyAdmin,
-  authController.updateUserByID
-);
-Router.get("/me", authMiddleware.verifyToken, authController.getMe);
-Router.get(
-  "/all-users",
-  authMiddleware.verifyToken,
-  authController.getAllUSers
-);
-Router.post("/logout", authController.logout);
+Router.post("/login", authLimiter, authValidation.login, authController.login);
+Router.post("/login-google", authLimiter, authController.loginGoogle);
 Router.post(
-  "/favorite",
-  authMiddleware.verifyToken,
-  authController.toggleFavorite
+  "/register",
+  authLimiter,
+  authValidation.register,
+  authController.register
 );
+
+Router.post("/logout", authController.logout);
+
 Router.post(
   "/playlist",
   authMiddleware.verifyToken,
@@ -49,5 +40,17 @@ Router.delete(
   authMiddleware.verifyToken,
   authMiddleware.verifyAdmin,
   authController.deleteUser
+);
+
+Router.get(
+  "/favorite",
+  authMiddleware.verifyToken,
+  authController.getFavorites
+);
+Router.get("/playlist", authMiddleware.verifyToken, authController.getPlaylist);
+Router.get(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  authController.getContinueWatching
 );
 export const authRoute = Router;

@@ -13,6 +13,7 @@ const USER_SCHEMA = Joi.object({
   avatar_url: Joi.string().uri().optional(),
   gender: Joi.string().valid("male", "female", "unknown").default("unknown"),
   isActive: Joi.boolean().default(true),
+  authType: Joi.string().valid("local", "google").default("local"),
   playlist: Joi.array().items(Joi.object()).default([]),
   continue_watching: Joi.array().items(Joi.object()).default([]),
   favorite: Joi.array().items(Joi.object()).default([]),
@@ -283,7 +284,34 @@ const deleteUser = async (id) => {
     throw error;
   }
 };
-export const authModels = {
+
+// pagination
+const getListPagination = async (userId, field, page, limit) => {
+  try {
+    const db = await GET_DB();
+    const skip = (page - 1) * limit;
+
+    const user = await db
+      .collection(USER_COLLECTION_NAME)
+      .aggregate([
+        { $match: { _id: new ObjectId(userId) } },
+
+        {
+          $project: {
+            _id: 0,
+            total: { $size: { $ifNull: [`$${field}`, []] } },
+            data: { $slice: [{ $ifNull: [`$${field}`, []] }, skip, limit] },
+          },
+        },
+      ])
+      .toArray();
+
+    return user[0] || { total: 0, data: [] };
+  } catch (error) {
+    throw error;
+  }
+};
+export const userModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
   findOneByEmail,
@@ -296,4 +324,5 @@ export const authModels = {
   updateContinueWatching,
   removeContinueWatching,
   deleteUser,
+  getListPagination,
 };

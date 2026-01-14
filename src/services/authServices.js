@@ -1,13 +1,85 @@
-import { authModels } from "~/models/authModels";
+import { userModels } from "~/models/userModels";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { env } from "~/config/environment";
 import { StatusCodes } from "http-status-codes";
+import crypto from "crypto";
+import { OAuth2Client } from "google-auth-library";
 
+const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+
+//login google
+const loginGoogle = async (credential) => {
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { email, name, picture } = payload;
+
+    let user = await userModels.findOneByEmail(email);
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const salt = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(randomPassword, salt);
+
+      const newUser = {
+        username: name,
+        email: email,
+        password: hashPassword,
+        avatar_url: picture,
+        role: "user",
+        gender: "unknown",
+        isActive: true,
+        authType: "google",
+        playlist: [],
+        continue_watching: [],
+        favorite: [],
+        createdAt: Date.now(),
+        updatedAt: null,
+      };
+
+      user = await userModels.createNewUser(newUser);
+    } else if (user._destroy) {
+      throw {
+        code: StatusCodes.FORBIDDEN,
+        message: "Tài khoản đã bị xóa",
+      };
+    } else if (!user.isActive) {
+      throw {
+        code: StatusCodes.FORBIDDEN,
+        message: "Tài khoản đã bị khóa",
+      };
+    }
+
+    const userInfo = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      gender: user.gender || "unknown",
+      avatar_url: user.avatar_url,
+      isActive: user.isActive,
+    };
+
+    const accessToken = jwt.sign(userInfo, env.JWT_SECRET, { expiresIn: "1d" });
+
+    return {
+      accessToken,
+      data: userInfo,
+    };
+  } catch (error) {
+    throw error;
+  }
+};
 // login
 const login = async (regBody) => {
   try {
-    const existUser = await authModels.findOneByEmail(regBody.email);
+    const existUser = await userModels.findOneByEmail(regBody.email);
 
     if (!existUser) {
       throw {
@@ -80,7 +152,7 @@ const generateAvatar = (email) => {
 const register = async (reqBody) => {
   try {
     // check exsisting email
-    const existingUSer = await authModels.findOneByEmail(reqBody.email);
+    const existingUSer = await userModels.findOneByEmail(reqBody.email);
     if (existingUSer) {
       throw {
         code: StatusCodes.CONFLICT,
@@ -109,84 +181,22 @@ const register = async (reqBody) => {
       updatedAt: null,
     };
 
-    const createNewUser = await authModels.createNewUser(newUser);
+    const createNewUser = await userModels.createNewUser(newUser);
 
     return createNewUser;
   } catch (error) {}
 };
 
-//update profile
-const update = async (userId, regBody) => {
-  try {
-    const updateData = {
-      username: regBody.username,
-      gender: regBody.gender,
-      avatar_url: regBody.avatar_url,
-      role: regBody.role,
-      isActive: regBody.isActive,
-    };
-
-    // loc bo nhung truong undefined
-    Object.keys(updateData).forEach((key) => {
-      updateData[key] === undefined && delete updateData[key];
-    });
-
-    //Goi model update
-    const updatedUser = await authModels.updateUser(userId, updateData);
-
-    if (updateData) delete updateData.password;
-
-    return updatedUser;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getAllUSers = async (filters) => {
-  try {
-    const users = await authModels.getAllUsers(filters);
-    return users;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const getDetailUser = async (userId) => {
-  try {
-    const user = await authModels.findOneById(userId);
-
-    if (!user) {
-      throw {
-        code: StatusCodes.NOT_FOUND,
-        message: "User not found",
-      };
-    }
-    return user;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// add favorite movie
-const toggleFavorite = async (userId, movieData) => {
-  try {
-    const rs = await authModels.toggleFavorite(userId, movieData);
-    return rs;
-  } catch (error) {
-    throw error;
-  }
-};
-
 const togglePlaylist = async (userId, movieData) => {
   try {
-    const rs = await authModels.togglePlaylist(userId, movieData);
+    const rs = await userModels.togglePlaylist(userId, movieData);
     return rs;
   } catch (error) {}
 };
 
 const saveProgress = async (userId, movieData) => {
   try {
-    const rs = await authModels.updateContinueWatching(userId, movieData);
+    const rs = await userModels.updateContinueWatching(userId, movieData);
     return rs;
   } catch (error) {
     throw error;
@@ -194,12 +204,12 @@ const saveProgress = async (userId, movieData) => {
 };
 
 const removeContinueWatching = async (userId, movileSlug) => {
-  return await authModels.removeContinueWatching(userId, movileSlug);
+  return await userModels.removeContinueWatching(userId, movileSlug);
 };
 
 const deleteUser = async (userId) => {
   try {
-    const existUser = await authModels.findOneById(userId);
+    const existUser = await userModels.findOneById(userId);
 
     if (!existUser) {
       throw {
@@ -214,21 +224,76 @@ const deleteUser = async (userId) => {
       };
     }
 
-    const rs = await authModels.deleteUser(userId);
+    const rs = await userModels.deleteUser(userId);
     return rs;
   } catch (error) {
     throw error;
   }
 };
+
+// pagination for favorite, palylist and continue watching
+const getFavorites = async (userId, { page = 1, limit = 18 }) => {
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 18;
+
+  const result = await userModels.getListPagination(
+    userId,
+    "favorite",
+    pageNum,
+    limitNum
+  );
+  return {
+    items: result.data,
+    totalItems: result.total,
+    currentPage: pageNum,
+    totalPages: Math.ceil(result.total / limitNum),
+  };
+};
+
+const getPlaylist = async (userId, { page = 1, limit = 18 }) => {
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 18;
+
+  const result = await userModels.getListPagination(
+    userId,
+    "playlist",
+    pageNum,
+    limitNum
+  );
+  return {
+    items: result.data,
+    totalItems: result.total,
+    currentPage: pageNum,
+    totalPages: Math.ceil(result.total / limitNum),
+  };
+};
+
+const getContinueWatching = async (userId, { page = 1, limit = 18 }) => {
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 18;
+
+  const result = await userModels.getListPagination(
+    userId,
+    "continue_watching",
+    pageNum,
+    limitNum
+  );
+  return {
+    items: result.data,
+    totalItems: result.total,
+    currentPage: pageNum,
+    totalPages: Math.ceil(result.total / limitNum),
+  };
+};
 export const authServices = {
   login,
+  loginGoogle,
   register,
-  update,
-  getDetailUser,
-  getAllUSers,
-  toggleFavorite,
   togglePlaylist,
   saveProgress,
   removeContinueWatching,
   deleteUser,
+  getFavorites,
+  getPlaylist,
+  getContinueWatching,
 };
