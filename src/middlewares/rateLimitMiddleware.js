@@ -3,7 +3,7 @@ import { StatusCodes } from "http-status-codes";
 
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 15,
   message: {
     message: "Bạn đã thao tác quá nhiều lần. Vui lòng thử lại sau 15 phút!",
   },

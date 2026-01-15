@@ -1,8 +1,7 @@
 import express from "express";
 import { authValidation } from "~/validations/authValidations";
 import { authController } from "~/controllers/authController";
-import { authMiddleware } from "~/middlewares/authMiddleware";
-import { authLimiter, commonLimiter } from "~/middlewares/rateLimitMiddleware";
+import { authLimiter } from "~/middlewares/rateLimitMiddleware";
 
 const Router = express.Router();
 
@@ -17,40 +16,7 @@ Router.post(
 
 Router.post("/logout", authController.logout);
 
-Router.post(
-  "/playlist",
-  authMiddleware.verifyToken,
-  authController.togglePlaylist
-);
-
-Router.post(
-  "/continue-watching",
-  authMiddleware.verifyToken,
-  authController.saveProgress
-);
-
-Router.delete(
-  "/continue-watching",
-  authMiddleware.verifyToken,
-  authController.removeContinueWatching
-);
-
-Router.delete(
-  "/user/:id",
-  authMiddleware.verifyToken,
-  authMiddleware.verifyAdmin,
-  authController.deleteUser
-);
-
-Router.get(
-  "/favorite",
-  authMiddleware.verifyToken,
-  authController.getFavorites
-);
-Router.get("/playlist", authMiddleware.verifyToken, authController.getPlaylist);
-Router.get(
-  "/continue-watching",
-  authMiddleware.verifyToken,
-  authController.getContinueWatching
-);
+Router.post("/forgot-password", authLimiter, authController.forgotPassword);
+Router.post("/reset-password", authLimiter, authController.resetPassword);
+Router.post("/verify-token", authController.verifyTokenResetPass);
 export const authRoute = Router;

@@ -38,4 +38,41 @@ Router.post(
   authMiddleware.verifyToken,
   userController.toggleFavorite
 );
+
+Router.post(
+  "/playlist",
+  authMiddleware.verifyToken,
+  userController.togglePlaylist
+);
+
+Router.post(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  userController.saveProgress
+);
+
+Router.delete(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  userController.removeContinueWatching
+);
+
+Router.delete(
+  "/user/:id",
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  userController.deleteUser
+);
+
+Router.get(
+  "/favorite",
+  authMiddleware.verifyToken,
+  userController.getFavorites
+);
+Router.get("/playlist", authMiddleware.verifyToken, userController.getPlaylist);
+Router.get(
+  "/continue-watching",
+  authMiddleware.verifyToken,
+  userController.getContinueWatching
+);
 export const userRoute = Router;

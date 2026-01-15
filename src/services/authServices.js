@@ -5,6 +5,7 @@ import { env } from "~/config/environment";
 import { StatusCodes } from "http-status-codes";
 import crypto from "crypto";
 import { OAuth2Client } from "google-auth-library";
+import sendEmail from "~/utils/email";
 
 const client = new OAuth2Client(env.GOOGLE_CLIENT_ID);
 
@@ -187,113 +188,123 @@ const register = async (reqBody) => {
   } catch (error) {}
 };
 
-const togglePlaylist = async (userId, movieData) => {
+const forgotPassword = async (email) => {
   try {
-    const rs = await userModels.togglePlaylist(userId, movieData);
-    return rs;
-  } catch (error) {}
-};
-
-const saveProgress = async (userId, movieData) => {
-  try {
-    const rs = await userModels.updateContinueWatching(userId, movieData);
-    return rs;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const removeContinueWatching = async (userId, movileSlug) => {
-  return await userModels.removeContinueWatching(userId, movileSlug);
-};
-
-const deleteUser = async (userId) => {
-  try {
-    const existUser = await userModels.findOneById(userId);
-
-    if (!existUser) {
+    const user = await userModels.findOneByEmail(email);
+    if (!user) {
       throw {
         code: StatusCodes.NOT_FOUND,
-        message: "User khong ton tai!",
+        message: "Email không tồn tại!",
       };
-    }
-    if (existUser.role === "admin") {
+    } else if (!user.isActive) {
       throw {
         code: StatusCodes.FORBIDDEN,
-        message: "Khong the xoa tai khoan admin!",
+        message: "Tài khoản đã bị khóa!",
+      };
+    } else if (user._destroy) {
+      throw {
+        code: StatusCodes.FORBIDDEN,
+        message: "Tài khoản đã bị xóa!",
       };
     }
 
-    const rs = await userModels.deleteUser(userId);
-    return rs;
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    const passwordResetToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+    await userModels.updateUser(user._id, {
+      passwordResetToken: passwordResetToken,
+      passwordResetExpires: passwordResetExpires,
+    });
+
+    const resetUrl = `${env.CLIENT_URL}/quen-mat-khau?token=${resetToken}`;
+
+    const message = `
+   <p style-"margin: 13px">Xin chào <strong>${user.username}</strong>,</p>
+   <p style-"margin: 13px">Chúng tôi đã nhận được yêu cầu thiết lập lại mật khẩu của bạn. Hãy nhấp vào liên kết bên dưới để thiết lập lại mật khẩu:</p>
+   <a href="${resetUrl}">Thiết lập lại mật khẩu</a>
+   <p style-"margin: 13px; font-weight: bold">Lưu ý:</p>
+   <ul style="display: block;list-style-type: disc; margin-block-start: 1em; margin-block-end: 1em; padding-inline-start: 40px;
+    unicode-bidi: isolate;">
+      <li style="margin-left: 15px">Liên kết sẽ hết hạn trong vòng <strong>15 phút</strong> kể từ thời điểm yêu cầu.</li>
+      <li style="margin-left: 15px">Nếu bạn không thiết lập lại mật khẩu, vui lòng bỏ qua email này. Tài khoản của bạn sẽ không có gì thay đổi.</li>
+   </ul>
+  `;
+
+    await sendEmail({
+      email: user.email,
+      subject: "Cflix - Đặt lại mật khẩu",
+      html: message,
+    });
+
+    return { message: "Hướng dẫn đặt lại mật khẩu đã được gửi về Email!" };
   } catch (error) {
     throw error;
   }
 };
 
-// pagination for favorite, palylist and continue watching
-const getFavorites = async (userId, { page = 1, limit = 18 }) => {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 18;
+const resetPassword = async (token, newPass) => {
+  try {
+    const passwordResetToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
 
-  const result = await userModels.getListPagination(
-    userId,
-    "favorite",
-    pageNum,
-    limitNum
-  );
-  return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
-  };
+    const user = await userModels.findOneResetToken(passwordResetToken);
+
+    if (!user) {
+      throw {
+        code: StatusCodes.NOT_FOUND,
+        message: "Token đã hết hạn hoặc không tồn tại!",
+      };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPass = await bcrypt.hash(newPass, salt);
+
+    await userModels.updateUser(user._id, {
+      password: hashPass,
+      passwordResetToken: null,
+      passwordResetExpires: null,
+      updatedAt: new Date(),
+    });
+
+    return { message: "Đặt lại mật khẩu thành công!" };
+  } catch (error) {
+    throw error;
+  }
 };
 
-const getPlaylist = async (userId, { page = 1, limit = 18 }) => {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 18;
+const verifyTokenResetPass = async (token) => {
+  try {
+    const passwordResetToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
 
-  const result = await userModels.getListPagination(
-    userId,
-    "playlist",
-    pageNum,
-    limitNum
-  );
-  return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
-  };
-};
+    const user = await userModels.findOneResetToken(passwordResetToken);
 
-const getContinueWatching = async (userId, { page = 1, limit = 18 }) => {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 18;
-
-  const result = await userModels.getListPagination(
-    userId,
-    "continue_watching",
-    pageNum,
-    limitNum
-  );
-  return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
-  };
+    if (!user) {
+      throw {
+        code: StatusCodes.NOT_FOUND,
+        message: "Token đã hết hạn hoặc không tồn tại!",
+      };
+    }
+    return { valid: true };
+  } catch (error) {
+    throw error;
+  }
 };
 export const authServices = {
   login,
   loginGoogle,
   register,
-  togglePlaylist,
-  saveProgress,
-  removeContinueWatching,
-  deleteUser,
-  getFavorites,
-  getPlaylist,
-  getContinueWatching,
+  forgotPassword,
+  resetPassword,
+  verifyTokenResetPass,
 };

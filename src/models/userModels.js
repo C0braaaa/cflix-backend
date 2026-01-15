@@ -1,6 +1,7 @@
 import Joi from "joi";
 import { GET_DB } from "~/config/mongodb";
 import { ObjectId } from "mongodb";
+import crypto from "crypto";
 
 const USER_COLLECTION_NAME = "users";
 
@@ -21,6 +22,8 @@ const USER_SCHEMA = Joi.object({
     .timestamp("javascript")
     .default(() => Date.now()),
   updatedAt: Joi.date().timestamp("javascript").allow(null).default(null),
+  passwordResetToken: Joi.string(),
+  passwordResetExpires: Joi.date(),
   _destroy: Joi.boolean().default(false),
 });
 
@@ -311,6 +314,20 @@ const getListPagination = async (userId, field, page, limit) => {
     throw error;
   }
 };
+
+const findOneResetToken = async (token) => {
+  try {
+    const db = await GET_DB();
+    const user = await db.collection(USER_COLLECTION_NAME).findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: new Date() },
+    });
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
 export const userModels = {
   USER_COLLECTION_NAME,
   USER_SCHEMA,
@@ -325,4 +342,5 @@ export const userModels = {
   removeContinueWatching,
   deleteUser,
   getListPagination,
+  findOneResetToken,
 };

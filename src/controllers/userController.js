@@ -146,10 +146,161 @@ const toggleFavorite = async (req, res) => {
     });
   }
 };
+
+const togglePlaylist = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const movieData = req.body;
+
+    const result = await userServices.togglePlaylist(userId, movieData);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg:
+        result.status === "added"
+          ? "Đã thêm vào danh sách xem sau"
+          : "Đã xóa khỏi danh sách xem sau",
+      result: result,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const saveProgress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const movieData = req.body;
+
+    await userServices.saveProgress(userId, movieData);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Lưu tiến trình thành công",
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const removeContinueWatching = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { slug } = req.body;
+
+    await userServices.removeContinueWatching(userId, slug);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Đã xóa khỏi tiếp tục xem",
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// delete user (soft delete)
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await userServices.deleteUser(id);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Xóa người dùng thành công",
+      result: result,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// pagination for favorite, playlist, continue watching
+const getFavorites = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page, limit } = req.query;
+
+    const result = await userServices.getFavorites(userId, { page, limit });
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Lấy danh sách yêu thích thành công",
+      data: result,
+      // totalItems: result.totalItems,
+      // currentPage: result.currentPage,
+      // totalPages: result.totalPages,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const getPlaylist = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page, limit } = req.query;
+
+    const result = await userServices.getPlaylist(userId, { page, limit });
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Lấy danh sách xem sau thành công",
+      data: result,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
+      totalItems: result.totalItems,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+const getContinueWatching = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { page, limit } = req.query;
+
+    const result = await userServices.getContinueWatching(userId, {
+      page,
+      limit,
+    });
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Lấy danh sách xem tiếp thành công",
+      data: result,
+      currentPage: result.currentPage,
+      totalPages: result.totalPages,
+      totalItems: result.totalItems,
+    });
+  } catch (error) {
+    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 export const userController = {
   update,
   getAllUSers,
   getDetailUser,
   updateUserByID,
   toggleFavorite,
+  togglePlaylist,
+  saveProgress,
+  removeContinueWatching,
+  deleteUser,
+  getFavorites,
+  getPlaylist,
+  getContinueWatching,
 };

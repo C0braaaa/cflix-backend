@@ -84,147 +84,78 @@ const register = async (req, res) => {
   }
 };
 
-const togglePlaylist = async (req, res) => {
+const forgotPassword = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const movieData = req.body;
+    const { email } = req.body;
+    if (!email) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Vui lòng cung cấp Email!",
+      });
+    }
 
-    const result = await authServices.togglePlaylist(userId, movieData);
+    const result = await authServices.forgotPassword(email);
 
     res.status(StatusCodes.OK).json({
       status: true,
-      msg:
-        result.status === "added"
-          ? "Đã thêm vào danh sách xem sau"
-          : "Đã xóa khỏi danh sách xem sau",
-      result: result,
+      msg: result.message,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    const customCode =
+      typeof error.code === "number"
+        ? error.code
+        : StatusCodes.INTERNAL_SERVER_ERROR;
+
+    res.status(customCode).json({
+      message: error.message || "Internal Server Error",
+      code: error.code, // Trả về mã lỗi gốc để bạn biết đường debug (ví dụ: EAUTH, EENVELOPE)
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token, newPass } = req.body;
+
+    if (!token || !newPass) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Thiếu thông tin Token hoặc Mật khẩu mới!",
+      });
+    }
+
+    const result = await authServices.resetPassword(token, newPass);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: result.message,
+    });
+  } catch (error) {
+    const customCode =
+      typeof error.code === "number"
+        ? error.code
+        : StatusCodes.INTERNAL_SERVER_ERROR;
+    res.status(customCode).json({
       message: error.message || "Internal Server Error",
     });
   }
 };
 
-const saveProgress = async (req, res) => {
+const verifyTokenResetPass = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const movieData = req.body;
-
-    await authServices.saveProgress(userId, movieData);
-
+    const { token } = req.body;
+    if (!token) {
+      throw {
+        code: StatusCodes.BAD_REQUEST,
+        message: "Thiếu thông tin Token",
+      };
+    }
+    await authServices.verifyTokenResetPass(token);
     res.status(StatusCodes.OK).json({
       status: true,
-      msg: "Lưu tiến trình thành công",
+      msg: "Token hợp lê!",
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-const removeContinueWatching = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { slug } = req.body;
-
-    await authServices.removeContinueWatching(userId, slug);
-    res.status(StatusCodes.OK).json({
-      status: true,
-      msg: "Đã xóa khỏi tiếp tục xem",
-    });
-  } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-// delete user (soft delete)
-const deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await authServices.deleteUser(id);
-    res.status(StatusCodes.OK).json({
-      status: true,
-      msg: "Xóa người dùng thành công",
-      result: result,
-    });
-  } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-// pagination for favorite, playlist, continue watching
-const getFavorites = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { page, limit } = req.query;
-
-    const result = await authServices.getFavorites(userId, { page, limit });
-
-    res.status(StatusCodes.OK).json({
-      status: true,
-      msg: "Lấy danh sách yêu thích thành công",
-      data: result,
-      // totalItems: result.totalItems,
-      // currentPage: result.currentPage,
-      // totalPages: result.totalPages,
-    });
-  } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-const getPlaylist = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { page, limit } = req.query;
-
-    const result = await authServices.getPlaylist(userId, { page, limit });
-
-    res.status(StatusCodes.OK).json({
-      status: true,
-      msg: "Lấy danh sách xem sau thành công",
-      data: result,
-      currentPage: result.currentPage,
-      totalPages: result.totalPages,
-      totalItems: result.totalItems,
-    });
-  } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
-  }
-};
-
-const getContinueWatching = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { page, limit } = req.query;
-
-    const result = await authServices.getContinueWatching(userId, {
-      page,
-      limit,
-    });
-
-    res.status(StatusCodes.OK).json({
-      status: true,
-      msg: "Lấy danh sách xem tiếp thành công",
-      data: result,
-      currentPage: result.currentPage,
-      totalPages: result.totalPages,
-      totalItems: result.totalItems,
-    });
-  } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Internal Server Error",
-    });
+    const customCode = typeof error.code === "number" ? error.code : 500;
+    res.status(customCode).json({ message: error.message, code: error.code });
   }
 };
 export const authController = {
@@ -232,11 +163,7 @@ export const authController = {
   loginGoogle,
   logout,
   register,
-  togglePlaylist,
-  saveProgress,
-  removeContinueWatching,
-  deleteUser,
-  getFavorites,
-  getPlaylist,
-  getContinueWatching,
+  forgotPassword,
+  resetPassword,
+  verifyTokenResetPass,
 };
