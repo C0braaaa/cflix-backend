@@ -130,6 +130,19 @@ const findOneById = async (id) => {
   }
 };
 
+// find user with pass
+const findUserWithPassword = async (id) => {
+  try {
+    const db = await GET_DB();
+    const user = await db.collection(USER_COLLECTION_NAME).findOne({
+      _id: new ObjectId(id),
+    });
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // add favorite movie
 const toggleFavorite = async (userId, movieData) => {
   try {
@@ -333,6 +346,7 @@ export const userModels = {
   USER_SCHEMA,
   findOneByEmail,
   findOneById,
+  findUserWithPassword,
   createNewUser,
   updateUser,
   getAllUsers,

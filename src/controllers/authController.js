@@ -158,6 +158,39 @@ const verifyTokenResetPass = async (req, res) => {
     res.status(customCode).json({ message: error.message, code: error.code });
   }
 };
+
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const { currentPass, newPass } = req.body;
+
+    if (!currentPass || !newPass) {
+      res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Vui lòng nhập các trường tương ứng!",
+      });
+    }
+
+    const result = await authServices.changePassword(
+      userId,
+      currentPass,
+      newPass
+    );
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: result.message,
+    });
+  } catch (error) {
+    const customCode =
+      typeof error.code === "number"
+        ? error.code
+        : StatusCodes.INTERNAL_SERVER_ERROR;
+    res.status(customCode).json({
+      message: error.message || "Lỗi Server khi đổi mật khẩu",
+    });
+  }
+};
 export const authController = {
   login,
   loginGoogle,
@@ -166,4 +199,5 @@ export const authController = {
   forgotPassword,
   resetPassword,
   verifyTokenResetPass,
+  changePassword,
 };

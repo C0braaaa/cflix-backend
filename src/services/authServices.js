@@ -300,6 +300,47 @@ const verifyTokenResetPass = async (token) => {
     throw error;
   }
 };
+
+const changePassword = async (userId, currentPass, newPass) => {
+  try {
+    const user = await userModels.findUserWithPassword(userId);
+
+    if (!user) {
+      throw {
+        code: StatusCodes.NOT_FOUND,
+        message: "Tài khoản không tồn tại!",
+      };
+    }
+
+    if (!user.password) {
+      throw {
+        code: StatusCodes.BAD_REQUEST,
+        message: "Tài khoản Google không thể đổi mật khẩu!",
+      };
+    }
+
+    const isMatch = await bcrypt.compare(currentPass, user.password);
+
+    if (!isMatch) {
+      throw {
+        code: StatusCodes.BAD_REQUEST,
+        message: "Mật khẩu cũ không chính xác!",
+      };
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashPassword = await bcrypt.hash(newPass, salt);
+
+    await userModels.updateUser(user._id, {
+      password: hashPassword,
+      updatedAt: new Date(),
+    });
+
+    return { message: "Đổi mật khẩu thành công!" };
+  } catch (error) {
+    throw error;
+  }
+};
 export const authServices = {
   login,
   loginGoogle,
@@ -307,4 +348,5 @@ export const authServices = {
   forgotPassword,
   resetPassword,
   verifyTokenResetPass,
+  changePassword,
 };
