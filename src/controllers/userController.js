@@ -61,18 +61,18 @@ const getAllUSers = async (req, res) => {
   try {
     const { keyword, role, is_active } = req.query;
 
-    const currentId = req.user._id;
+    // const currentId = req.user._id;
 
-    const users = await userServices.getAllUSers({
+    const result = await userServices.getAllUSers({
       keyword,
       role,
       is_active,
-      currentId,
     });
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Get all users successfully",
-      users: users,
+      users: result.users,
+      totalUsers: result.total,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({

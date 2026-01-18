@@ -72,7 +72,7 @@ const updateUser = async (id, data) => {
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
         { $set: updateData },
-        { returnDocument: "after" }
+        { returnDocument: "after" },
       );
     return result;
   } catch (error) {
@@ -81,15 +81,15 @@ const updateUser = async (id, data) => {
 };
 
 // get all users
-const getAllUsers = async ({ keyword, role, is_active, currentId }) => {
+const getAllUsers = async ({ keyword, role, is_active }) => {
   try {
     const query = {
       _destroy: false,
     };
 
-    if (currentId) {
-      query._id = { $ne: new ObjectId(currentId) };
-    }
+    // if (currentId) {
+    //   query._id = { $ne: new ObjectId(currentId) };
+    // }
 
     if (keyword) {
       const regex = { $regex: keyword, $options: "i" };
@@ -112,7 +112,10 @@ const getAllUsers = async ({ keyword, role, is_active, currentId }) => {
       .sort({ createdAt: -1 })
       .toArray();
 
-    return users;
+    const total = await db
+      .collection(USER_COLLECTION_NAME)
+      .countDocuments(query);
+    return { users, total };
   } catch (error) {
     throw error;
   }
@@ -158,7 +161,7 @@ const toggleFavorite = async (userId, movieData) => {
         .collection(USER_COLLECTION_NAME)
         .updateOne(
           { _id: new ObjectId(userId) },
-          { $pull: { favorite: { slug: movieData.slug } } }
+          { $pull: { favorite: { slug: movieData.slug } } },
         );
       return { status: "removed", slug: movieData.slug };
     } else {
@@ -178,7 +181,7 @@ const toggleFavorite = async (userId, movieData) => {
               $position: 0,
             },
           },
-        }
+        },
       );
 
       return { status: "added", newItem };
@@ -204,7 +207,7 @@ const togglePlaylist = async (userId, movieData) => {
         },
         {
           $pull: { playlist: { slug: movieData.slug } },
-        }
+        },
       );
       return { status: "removed", slug: movieData.slug };
     } else {
@@ -226,7 +229,7 @@ const togglePlaylist = async (userId, movieData) => {
               $position: 0,
             },
           },
-        }
+        },
       );
       return { status: "added", newItem };
     }
@@ -242,7 +245,7 @@ const updateContinueWatching = async (userId, movieData) => {
       .collection(USER_COLLECTION_NAME)
       .updateOne(
         { _id: new ObjectId(userId) },
-        { $pull: { continue_watching: { slug: movieData.slug } } }
+        { $pull: { continue_watching: { slug: movieData.slug } } },
       );
 
     const newItem = {
@@ -259,7 +262,7 @@ const updateContinueWatching = async (userId, movieData) => {
             $position: 0,
           },
         },
-      }
+      },
     );
 
     return result;
@@ -275,7 +278,7 @@ const removeContinueWatching = async (userId, movileSlug) => {
       {
         _id: new ObjectId(userId),
       },
-      { $pull: { continue_watching: { slug: movileSlug } } }
+      { $pull: { continue_watching: { slug: movileSlug } } },
     );
     return result;
   } catch (error) {
@@ -293,7 +296,7 @@ const deleteUser = async (id) => {
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
         { $set: { _destroy: true, updatedAt: new Date() } },
-        { returnDocument: "after" }
+        { returnDocument: "after" },
       );
     return result;
   } catch (error) {
