@@ -17,4 +17,20 @@ const getAllSliders = async (req, res) => {
   }
 };
 
-export const sliderController = { getAllSliders };
+// add new slider
+const createNewSlider = async (req, res) => {
+  try {
+    const newSlider = await sliderServices.createNewSlider(req.body);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Create new slider successfully",
+      data: newSlider,
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const sliderController = { getAllSliders, createNewSlider };

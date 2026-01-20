@@ -41,8 +41,29 @@ const getSliders = async () => {
   }
 };
 
+// add new slider
+const createNewSLider = async (data) => {
+  try {
+    const validData = await SLIDER_SCHEMA.validateAsync(data, {
+      abortEarly: false,
+    });
+
+    const db = await GET_DB();
+
+    const result = await db
+      .collection(SLIDER_COLLECTION_NAME)
+      .insertOne(validData);
+
+    return await db
+      .collection(SLIDER_COLLECTION_NAME)
+      .findOne({ _id: result.insertedId });
+  } catch (error) {
+    throw error;
+  }
+};
 export const sliderModels = {
   SLIDER_COLLECTION_NAME,
   SLIDER_SCHEMA,
   getSliders,
+  createNewSLider,
 };

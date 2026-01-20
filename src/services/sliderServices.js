@@ -9,6 +9,19 @@ const getAllSliders = async () => {
   }
 };
 
+// add new slider
+const createNewSlider = async (data) => {
+  try {
+    const slideData = {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    return await sliderModels.createNewSLider(slideData);
+  } catch (error) {}
+};
 export const sliderServices = {
   getAllSliders,
+  createNewSlider,
 };
