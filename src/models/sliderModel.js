@@ -34,7 +34,7 @@ const getSliders = async () => {
     return await db
       .collection(SLIDER_COLLECTION_NAME)
       .find({})
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .toArray();
   } catch (error) {
     throw error;
@@ -61,9 +61,51 @@ const createNewSLider = async (data) => {
     throw error;
   }
 };
+
+// delete slider
+const deleteSlider = async (id) => {
+  try {
+    const db = await GET_DB();
+
+    const result = await db
+      .collection(SLIDER_COLLECTION_NAME)
+      .deleteOne({ _id: new ObjectId(id) });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+//update slider
+const updateSlider = async (id, data) => {
+  try {
+    const db = await GET_DB();
+
+    const updateData = { ...data };
+
+    delete updateData._id;
+    delete updateData.createdAt;
+
+    updateData.updatedAt = new Date();
+
+    const result = await db
+      .collection(SLIDER_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: updateData },
+        { returnDocument: "after" },
+      );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
 export const sliderModels = {
   SLIDER_COLLECTION_NAME,
   SLIDER_SCHEMA,
   getSliders,
   createNewSLider,
+  deleteSlider,
+  updateSlider,
 };

@@ -33,4 +33,43 @@ const createNewSlider = async (req, res) => {
   }
 };
 
-export const sliderController = { getAllSliders, createNewSlider };
+// delete slider
+const deleteSlider = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await sliderServices.deleteSlider(id);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Delete slider successfully",
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+// update slider
+const updateSlider = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updateData = await sliderServices.updateSlider(id, req.body);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Update slider successfully",
+      data: updateData,
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
+export const sliderController = {
+  getAllSliders,
+  createNewSlider,
+  deleteSlider,
+  updateSlider,
+};

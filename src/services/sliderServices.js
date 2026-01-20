@@ -21,7 +21,32 @@ const createNewSlider = async (data) => {
     return await sliderModels.createNewSLider(slideData);
   } catch (error) {}
 };
+
+// delete Slider
+const deleteSlider = async (id) => {
+  try {
+    return await sliderModels.deleteSlider(id);
+  } catch (error) {
+    throw error;
+  }
+};
+
+//update slider
+const updateSlider = async (id, data) => {
+  try {
+    const updateData = {
+      ...data,
+      updatedAt: new Date(),
+    };
+
+    return await sliderModels.updateSlider(id, updateData);
+  } catch (error) {
+    throw error;
+  }
+};
 export const sliderServices = {
   getAllSliders,
   createNewSlider,
+  deleteSlider,
+  updateSlider,
 };

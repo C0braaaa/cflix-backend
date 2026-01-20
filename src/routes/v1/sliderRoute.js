@@ -10,5 +10,18 @@ Router.post(
   authMiddleware.verifyAdmin,
   sliderController.createNewSlider,
 );
+Router.delete(
+  "/sliders/:id",
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  sliderController.deleteSlider,
+);
+
+Router.put(
+  "/sliders/:id",
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  sliderController.updateSlider,
+);
 
 export const sliderRoute = Router;
