@@ -14,8 +14,28 @@ const toggleVoteComment = async (commentId, userId, type) => {
   }
   return await commentModel.toggleVoteComment(commentId, userId, type);
 };
+
+// delete comment
+const deleteComment = async (id, userId, userRole) => {
+  const targetComment = await commentModel.getCommentById(id);
+
+  if (!targetComment) {
+    throw new Error("Comment not found");
+  }
+
+  const isOwner = targetComment.user_id.toString() === userId.toString();
+  const isAdmin = userRole === "admin";
+  const commentByAdmin = targetComment.user_role === "admin";
+
+  if (isOwner || (isAdmin && !commentByAdmin)) {
+    return await commentModel.deleteComment(id);
+  } else {
+    throw new Error("Bạn không có quyền xóa bình luận này!");
+  }
+};
 export const commentServices = {
   addComment,
   getCommentBySlug,
   toggleVoteComment,
+  deleteComment,
 };

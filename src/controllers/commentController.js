@@ -55,8 +55,28 @@ const toggleVoteComment = async (req, res) => {
     });
   }
 };
+
+// delete comment
+const deleteComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    await commentServices.deleteComment(id, userId, userRole);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Delete comment successfully",
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 export const commentController = {
   addComment,
   getCommentBySlug,
   toggleVoteComment,
+  deleteComment,
 };

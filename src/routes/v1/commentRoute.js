@@ -11,4 +11,9 @@ Router.put(
   authMiddleware.verifyToken,
   commentController.toggleVoteComment,
 );
+Router.delete(
+  "/:id",
+  authMiddleware.verifyToken,
+  commentController.deleteComment,
+);
 export const commentRoute = Router;

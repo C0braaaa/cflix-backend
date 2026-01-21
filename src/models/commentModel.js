@@ -49,7 +49,7 @@ const getCommentBySlug = async (slug) => {
     return await db
       .collection(COMMENT_COLLECTION_NAME)
       .find({ movie_slug: slug })
-      .sort({ createdAt: -1 })
+      .sort({ user_role: 1, createdAt: -1 })
       .limit(50)
       .toArray();
   } catch (error) {
@@ -102,10 +102,36 @@ const toggleVoteComment = async (commentId, userId, type) => {
     throw error;
   }
 };
+
+// get comment by ID
+const getCommentById = async (id) => {
+  try {
+    const db = await GET_DB();
+    return await db
+      .collection(COMMENT_COLLECTION_NAME)
+      .findOne({ _id: new ObjectId(id) });
+  } catch (error) {
+    throw error;
+  }
+};
+
+// delete comment
+const deleteComment = async (id) => {
+  try {
+    const db = await GET_DB();
+    return await db
+      .collection(COMMENT_COLLECTION_NAME)
+      .deleteOne({ _id: new ObjectId(id) });
+  } catch (error) {
+    throw error;
+  }
+};
 export const commentModel = {
   COMMENT_COLLECTION_NAME,
   COMMENT_SCHEMA,
   addComment,
   getCommentBySlug,
   toggleVoteComment,
+  getCommentById,
+  deleteComment,
 };
