@@ -28,7 +28,8 @@
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^7.0.12",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.22.10",

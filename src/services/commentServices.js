@@ -28,7 +28,8 @@ const deleteComment = async (id, userId, userRole) => {
   const commentByAdmin = targetComment.user_role === "admin";
 
   if (isOwner || (isAdmin && !commentByAdmin)) {
-    return await commentModel.deleteComment(id);
+    await commentModel.deleteComment(id);
+    return targetComment;
   } else {
     throw new Error("Bạn không có quyền xóa bình luận này!");
   }

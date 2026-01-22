@@ -4,9 +4,35 @@ import { CONNECT_DB } from "./config/mongodb";
 import { env } from "./config/environment";
 import { APIs_V1 } from "./routes/v1";
 import cookieParser from "cookie-parser";
+import { createServer } from "http";
+import { Server } from "socket.io";
 
 const START_SERVER = () => {
   const app = express();
+
+  const httpServer = createServer(app);
+
+  const io = new Server(httpServer, {
+    cors: {
+      origin: env.CLIENT_URL,
+      methods: ["GET", "POST"],
+      credentials: true,
+    },
+  });
+
+  // lưu biến io vào app dể controller có thể dùng
+  app.set("socketio", io);
+
+  //lắng nghe kết nối io
+  io.on("connection", (socket) => {
+    socket.on("join_room", (slug) => {
+      socket.join(slug);
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Ngắt kết nối socket!");
+    });
+  });
 
   // Đọc JSON body từ FE
   app.use(express.json());
@@ -20,14 +46,14 @@ const START_SERVER = () => {
       credentials: true,
       methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
-    })
+    }),
   );
   // Prefix chung cho API v1
   app.use("/v1", APIs_V1);
 
-  app.listen(env.APP_PORT, env.APP_HOST, async () => {
+  httpServer.listen(env.APP_PORT, env.APP_HOST, async () => {
     console.log(
-      `Hello Hieu C0bra Dev, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`
+      `Hello Hieu C0bra Dev, I am running at http://${env.APP_HOST}:${env.APP_PORT}/`,
     );
   });
 };

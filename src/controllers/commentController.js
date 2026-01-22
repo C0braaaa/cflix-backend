@@ -4,6 +4,11 @@ import { StatusCodes } from "http-status-codes";
 const addComment = async (req, res) => {
   try {
     const newComment = await commentServices.addComment(req.body);
+    const io = req.app.get("socketio");
+
+    if (io) {
+      io.to(req.body.movie_slug).emit("receive_comment", newComment);
+    }
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Add comment successfully",
@@ -62,7 +67,20 @@ const deleteComment = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
     const userRole = req.user.role;
-    await commentServices.deleteComment(id, userId, userRole);
+    const deletedComment = await commentServices.deleteComment(
+      id,
+      userId,
+      userRole,
+    );
+
+    const io = req.app.get("socketio");
+
+    if (io) {
+      io.to(deletedComment.movie_slug).emit(
+        "delete_comment",
+        deletedComment._id,
+      );
+    }
 
     res.status(StatusCodes.OK).json({
       status: true,
