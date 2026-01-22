@@ -1,7 +1,6 @@
 import { userModels } from "~/models/userModels";
-import jwt from "jsonwebtoken";
-import { env } from "~/config/environment";
 import { StatusCodes } from "http-status-codes";
+import { interactionModel } from "~/models/interactionsModel";
 
 //update profile
 const update = async (userId, regBody) => {
@@ -56,36 +55,6 @@ const getDetailUser = async (userId) => {
   }
 };
 
-// add favorite movie
-const toggleFavorite = async (userId, movieData) => {
-  try {
-    const rs = await userModels.toggleFavorite(userId, movieData);
-    return rs;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const togglePlaylist = async (userId, movieData) => {
-  try {
-    const rs = await userModels.togglePlaylist(userId, movieData);
-    return rs;
-  } catch (error) {}
-};
-
-const saveProgress = async (userId, movieData) => {
-  try {
-    const rs = await userModels.updateContinueWatching(userId, movieData);
-    return rs;
-  } catch (error) {
-    throw error;
-  }
-};
-
-const removeContinueWatching = async (userId, movileSlug) => {
-  return await userModels.removeContinueWatching(userId, movileSlug);
-};
-
 const deleteUser = async (userId) => {
   try {
     const existUser = await userModels.findOneById(userId);
@@ -109,59 +78,164 @@ const deleteUser = async (userId) => {
     throw error;
   }
 };
+// add favorite movie
+const toggleFavorite = async (userId, movieData) => {
+  try {
+    const uid = userId.toString();
+    const type = "favorite";
+
+    const exists = await interactionModel.findInteraction(
+      uid,
+      movieData.slug,
+      type,
+    );
+
+    if (exists) {
+      await interactionModel.removeInteraction(uid, movieData.slug, type);
+      return { status: "removed", slug: movieData.slug };
+    } else {
+      const newItem = {
+        user_id: uid,
+        slug: movieData.slug,
+        name: movieData.name,
+        origin_name: movieData.origin_name,
+        poster_url: movieData.poster_url,
+        type: type,
+      };
+      await interactionModel.addInteraction(newItem);
+      return { status: "added", newItem };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const togglePlaylist = async (userId, movieData) => {
+  try {
+    const uid = userId.toString();
+    const type = "playlist";
+
+    const exists = await interactionModel.findInteraction(
+      uid,
+      movieData.slug,
+      type,
+    );
+
+    if (exists) {
+      await interactionModel.removeInteraction(uid, movieData.slug, type);
+      return { status: "removed", slug: movieData.slug };
+    } else {
+      const newItem = {
+        user_id: uid,
+        slug: movieData.slug,
+        name: movieData.name,
+        origin_name: movieData.origin_name,
+        poster_url: movieData.poster_url,
+        type: type,
+      };
+      await interactionModel.addInteraction(newItem);
+      return { status: "added", newItem };
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+const saveProgress = async (userId, movieData) => {
+  try {
+    const progressData = {
+      user_id: userId.toString(),
+      slug: movieData.slug,
+      name: movieData.name,
+      origin_name: movieData.origin_name,
+      poster_url: movieData.poster_url,
+      episode_slug: movieData.episode_slug,
+      episode_name: movieData.episode_name,
+      current_time: movieData.current_time,
+      duration: movieData.duration,
+
+      type: "continue_watching",
+    };
+
+    const rs = await interactionModel.saveProgress(progressData);
+    return rs;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const removeContinueWatching = async (userId, movileSlug) => {
+  return await interactionModel.removeInteraction(
+    userId,
+    movileSlug,
+    "continue_watching",
+  );
+};
 // pagination for favorite, palylist and continue watching
-const getFavorites = async (userId, { page = 1, limit = 18 }) => {
+const getInteractionsPagination = async (userId, type, page, limit) => {
   const pageNum = parseInt(page) || 1;
   const limitNum = parseInt(limit) || 18;
 
-  const result = await userModels.getListPagination(
+  // Gọi Model mới
+  const result = await interactionModel.getInteractions(
+    userId,
+    type,
+    pageNum,
+    limitNum,
+  );
+
+  return {
+    items: result.items,
+    totalItems: result.total,
+    currentPage: pageNum,
+    totalPages: Math.ceil(result.total / limitNum),
+  };
+};
+const getFavorites = async (userId, query) => {
+  return await getInteractionsPagination(
     userId,
     "favorite",
-    pageNum,
-    limitNum
+    query.page,
+    query.limit,
   );
-  return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
-  };
 };
 
-const getPlaylist = async (userId, { page = 1, limit = 18 }) => {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 18;
-
-  const result = await userModels.getListPagination(
+const getPlaylist = async (userId, query) => {
+  return await getInteractionsPagination(
     userId,
     "playlist",
-    pageNum,
-    limitNum
+    query.page,
+    query.limit,
   );
-  return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
-  };
 };
 
-const getContinueWatching = async (userId, { page = 1, limit = 18 }) => {
-  const pageNum = parseInt(page) || 1;
-  const limitNum = parseInt(limit) || 18;
-
-  const result = await userModels.getListPagination(
+const getContinueWatching = async (userId, query) => {
+  return await getInteractionsPagination(
     userId,
     "continue_watching",
-    pageNum,
-    limitNum
+    query.page,
+    query.limit,
   );
+};
+
+const checkMovieStatus = async (userId, slug) => {
+  const uid = userId.toString();
+  const [favorite, playlist] = await Promise.all([
+    interactionModel.findInteraction(uid, slug, "favorite"),
+    interactionModel.findInteraction(uid, slug, "playlist"),
+  ]);
   return {
-    items: result.data,
-    totalItems: result.total,
-    currentPage: pageNum,
-    totalPages: Math.ceil(result.total / limitNum),
+    isFavorite: !!favorite,
+    isPlaylist: !!playlist,
   };
+};
+const getProgress = async (userId, slug) => {
+  const progress = await interactionModel.findInteraction(
+    userId,
+    slug,
+    "continue_watching",
+  );
+  return progress;
 };
 export const userServices = {
   update,
@@ -175,4 +249,6 @@ export const userServices = {
   getFavorites,
   getPlaylist,
   getContinueWatching,
+  checkMovieStatus,
+  getProgress,
 };

@@ -9,70 +9,82 @@ Router.put(
   "/update",
   commonLimiter,
   authMiddleware.verifyToken,
-  userController.update
+  userController.update,
 );
 
 Router.get(
   "/all-users",
   commonLimiter,
   authMiddleware.verifyToken,
-  userController.getAllUSers
+  userController.getAllUSers,
 );
 
 Router.get(
   "/me",
   commonLimiter,
   authMiddleware.verifyToken,
-  userController.getDetailUser
+  userController.getDetailUser,
 );
 
 Router.put(
   "/admin/update/:id",
   authMiddleware.verifyToken,
   authMiddleware.verifyAdmin,
-  userController.updateUserByID
+  userController.updateUserByID,
 );
 
 Router.post(
   "/favorite",
   authMiddleware.verifyToken,
-  userController.toggleFavorite
+  userController.toggleFavorite,
 );
 
 Router.post(
   "/playlist",
   authMiddleware.verifyToken,
-  userController.togglePlaylist
+  userController.togglePlaylist,
 );
 
 Router.post(
   "/continue-watching",
   authMiddleware.verifyToken,
-  userController.saveProgress
+  userController.saveProgress,
 );
 
 Router.delete(
   "/continue-watching",
   authMiddleware.verifyToken,
-  userController.removeContinueWatching
+  userController.removeContinueWatching,
 );
 
 Router.delete(
   "/user/:id",
   authMiddleware.verifyToken,
   authMiddleware.verifyAdmin,
-  userController.deleteUser
+  userController.deleteUser,
 );
 
 Router.get(
   "/favorite",
   authMiddleware.verifyToken,
-  userController.getFavorites
+  userController.getFavorites,
 );
 Router.get("/playlist", authMiddleware.verifyToken, userController.getPlaylist);
 Router.get(
   "/continue-watching",
   authMiddleware.verifyToken,
-  userController.getContinueWatching
+  userController.getContinueWatching,
+);
+
+Router.get(
+  "/check-status/:slug",
+  authMiddleware.verifyToken,
+  userController.checkStatus,
+);
+
+Router.get(
+  "/progress/:slug",
+  authMiddleware.verifyToken,
+  userController.getProgress,
 );
 export const userRoute = Router;

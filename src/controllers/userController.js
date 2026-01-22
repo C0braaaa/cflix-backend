@@ -290,6 +290,37 @@ const getContinueWatching = async (req, res) => {
     });
   }
 };
+
+const checkStatus = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { slug } = req.params;
+    const status = await userServices.checkMovieStatus(userId, slug);
+    res.status(StatusCodes.OK).json({ status: true, data: status });
+  } catch (error) {
+    res
+      .status(StatusCodes.INTERNAL_SERVER_ERROR)
+      .json({ message: error.message });
+  }
+};
+
+const getProgress = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { slug } = req.params;
+
+    const data = await userServices.getProgress(userId, slug);
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      data: data,
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message,
+    });
+  }
+};
 export const userController = {
   update,
   getAllUSers,
@@ -303,4 +334,6 @@ export const userController = {
   getFavorites,
   getPlaylist,
   getContinueWatching,
+  checkStatus,
+  getProgress,
 };
