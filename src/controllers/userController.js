@@ -255,9 +255,9 @@ const getPlaylist = async (req, res) => {
       status: true,
       msg: "Lấy danh sách xem sau thành công",
       data: result,
-      currentPage: result.currentPage,
-      totalPages: result.totalPages,
-      totalItems: result.totalItems,
+      // currentPage: result.currentPage,
+      // totalPages: result.totalPages,
+      // totalItems: result.totalItems,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
@@ -280,9 +280,9 @@ const getContinueWatching = async (req, res) => {
       status: true,
       msg: "Lấy danh sách xem tiếp thành công",
       data: result,
-      currentPage: result.currentPage,
-      totalPages: result.totalPages,
-      totalItems: result.totalItems,
+      // currentPage: result.currentPage,
+      // totalPages: result.totalPages,
+      // totalItems: result.totalItems,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({

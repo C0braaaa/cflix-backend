@@ -39,4 +39,21 @@ export const authMiddleware = {
       });
     }
   },
+  checkTokenOptional: (req, res, next) => {
+    const token =
+      req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    try {
+      const decoded = jwt.verify(token, env.JWT_SECRET);
+      req.user = decoded;
+    } catch (error) {
+      req.user = null;
+    }
+    next();
+  },
 };
