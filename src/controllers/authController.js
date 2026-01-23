@@ -1,8 +1,5 @@
 import { StatusCodes } from "http-status-codes";
 import { authServices } from "~/services/authServices";
-import jwt from "jsonwebtoken";
-import { env } from "~/config/environment";
-
 const login = async (req, res) => {
   try {
     const result = await authServices.login(req.body);
@@ -174,7 +171,7 @@ const changePassword = async (req, res) => {
     const result = await authServices.changePassword(
       userId,
       currentPass,
-      newPass
+      newPass,
     );
 
     res.status(StatusCodes.OK).json({

@@ -1,4 +1,4 @@
-import Joi from "joi";
+import Joi, { allow } from "joi";
 import { GET_DB } from "~/config/mongodb";
 import { ObjectId } from "mongodb";
 import crypto from "crypto";
@@ -19,8 +19,8 @@ const USER_SCHEMA = Joi.object({
     .timestamp("javascript")
     .default(() => Date.now()),
   updatedAt: Joi.date().timestamp("javascript").allow(null).default(null),
-  passwordResetToken: Joi.string(),
-  passwordResetExpires: Joi.date(),
+  passwordResetToken: Joi.string().allow(null).default(null),
+  passwordResetExpires: Joi.date().allow(null).default(null),
   _destroy: Joi.boolean().default(false),
 });
 

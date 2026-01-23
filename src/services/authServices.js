@@ -145,7 +145,7 @@ const login = async (regBody) => {
 // generate avatar
 const generateAvatar = (email) => {
   return `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(
-    email.toLowerCase()
+    email.toLowerCase(),
   )}`;
 };
 

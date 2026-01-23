@@ -12,7 +12,7 @@ Router.post(
   "/register",
   authLimiter,
   authValidation.register,
-  authController.register
+  authController.register,
 );
 
 Router.post("/logout", authController.logout);
@@ -23,6 +23,6 @@ Router.post("/verify-token", authController.verifyTokenResetPass);
 Router.put(
   "/change-password",
   authMiddleware.verifyToken,
-  authController.changePassword
+  authController.changePassword,
 );
 export const authRoute = Router;

@@ -22,14 +22,22 @@ const START_SERVER = () => {
 
   // lưu biến io vào app dể controller có thể dùng
   app.set("socketio", io);
-
+  let onlineUsersCount = 0;
   //lắng nghe kết nối io
   io.on("connection", (socket) => {
+    onlineUsersCount++;
+    io.emit("online_users", onlineUsersCount);
+    socket.on("req_online_users", () => {
+      socket.emit("online_users", onlineUsersCount);
+    });
+
     socket.on("join_room", (slug) => {
       socket.join(slug);
     });
 
     socket.on("disconnect", () => {
+      onlineUsersCount = Math.max(0, onlineUsersCount - 1);
+      io.emit("online_users", onlineUsersCount);
       console.log("Ngắt kết nối socket!");
     });
   });
