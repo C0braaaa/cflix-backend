@@ -18,7 +18,7 @@ const createReplyNotify = async (
       sender_id: currentUser._id,
       receiver_id: originalComment.user_id.toString(),
       type: "reply_comment",
-      title: `${currentUser.username} đã trả lời bạn`,
+      sender_name: currentUser.username,
       message:
         replyContent.length > 50
           ? replyContent.slice(0, 50) + "..."
@@ -39,12 +39,17 @@ const createLikeNotify = async (currentUser, targetCommentId, movieSlug) => {
       originalComment.user_id.toString() === currentUser._id.toString()
     )
       return null;
+
+    const messageContent = originalComment.content;
     return await notificationModel.createNotify({
       sender_id: currentUser._id,
       receiver_id: originalComment.user_id.toString(),
-      type: "reply_comment",
-      title: `${currentUser.username} đã thích bình luận của bạn`,
-      message: replyContent,
+      type: "like_comment",
+      sender_name: currentUser.username,
+      message:
+        messageContent.length > 50
+          ? messageContent.slice(0, 50) + "..."
+          : messageContent,
       target_url: `/phim/${movieSlug}`,
       image: currentUser.avatar_url,
     });
@@ -53,12 +58,27 @@ const createLikeNotify = async (currentUser, targetCommentId, movieSlug) => {
   }
 };
 
+const markAsRead = async (id, userId) => {
+  return await notificationModel.markAsRead(id, userId);
+};
+
+const markAllAsRead = async (userId) => {
+  return await notificationModel.markAllAsRead(userId);
+};
+
 const getMyNotifications = async (userId) => {
   const data = await notificationModel.getUserNotifications(userId);
   return data;
+};
+
+const deleteNotify = async (id, userId) => {
+  return await notificationModel.deleteNotify(id, userId);
 };
 export const notificationServices = {
   createReplyNotify,
   createLikeNotify,
   getMyNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotify,
 };

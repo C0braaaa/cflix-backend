@@ -1,4 +1,5 @@
 import { commentServices } from "~/services/commentServices";
+import { notificationServices } from "~/services/notificationService";
 import { StatusCodes } from "http-status-codes";
 
 const addComment = async (req, res) => {
@@ -8,6 +9,15 @@ const addComment = async (req, res) => {
 
     if (io) {
       io.to(req.body.movie_slug).emit("receive_comment", newComment);
+    }
+
+    if (req.body.parent_id) {
+      notificationServices.createReplyNotify(
+        req.user,
+        req.body.parent_id,
+        req.body.content,
+        req.body.movie_slug,
+      );
     }
     res.status(StatusCodes.OK).json({
       status: true,
@@ -49,6 +59,14 @@ const toggleVoteComment = async (req, res) => {
       userId,
       type,
     );
+
+    if (type === "like") {
+      notificationServices.createLikeNotify(
+        req.user,
+        id,
+        updatedComment.movie_slug,
+      );
+    }
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Vote comment successfully",

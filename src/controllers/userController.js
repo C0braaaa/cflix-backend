@@ -59,7 +59,7 @@ const update = async (req, res) => {
 // get all users
 const getAllUSers = async (req, res) => {
   try {
-    const { keyword, role, is_active } = req.query;
+    const { keyword, role, is_active, page, limit } = req.query;
 
     // const currentId = req.user._id;
 
@@ -67,12 +67,23 @@ const getAllUSers = async (req, res) => {
       keyword,
       role,
       is_active,
+      page,
+      limit,
     });
+
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const totalPages = Math.ceil(result.total / limitNum);
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Get all users successfully",
       users: result.users,
       totalUsers: result.total,
+      totalActive: result.totalActive,
+      totalInactive: result.totalInactive,
+      totalNewToday: result.totalNewToday,
+      currentPage: pageNum,
+      totalPages: totalPages,
     });
   } catch (error) {
     res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({

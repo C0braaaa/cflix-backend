@@ -10,7 +10,7 @@ const NOTIFICATION_SCHEMA = Joi.object({
   type: Joi.string()
     .valid("new_episode", "reply_comment", "like_comment")
     .required(),
-  title: Joi.string().required(),
+  sender_name: Joi.string().required(),
   message: Joi.string().required(),
   target_url: Joi.string().required(),
   image: Joi.string().optional().allow(""),
@@ -61,7 +61,51 @@ const getUserNotifications = async (user_id, limit = 10) => {
     throw error;
   }
 };
+
+const markAsRead = async (id, userId) => {
+  try {
+    const db = await GET_DB();
+    return await db
+      .collection(NOTIFICATION_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(id), receiver_id: new ObjectId(userId) },
+        { $set: { is_read: true } },
+        { returnDocument: "after" },
+      );
+  } catch (error) {
+    throw error;
+  }
+};
+const markAllAsRead = async (userId) => {
+  try {
+    const db = GET_DB();
+    return await db
+      .collection(NOTIFICATION_COLLECTION_NAME)
+      .updateMany(
+        { receiver_id: new ObjectId(userId), is_read: false },
+        { $set: { is_read: true } },
+      );
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteNotify = async (id, userId) => {
+  try {
+    const db = await GET_DB();
+    const result = await db.collection(NOTIFICATION_COLLECTION_NAME).deleteOne({
+      _id: new ObjectId(id),
+      receiver_id: new ObjectId(userId),
+    });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
 export const notificationModel = {
   createNotify,
   getUserNotifications,
+  markAsRead,
+  markAllAsRead,
+  deleteNotify,
 };

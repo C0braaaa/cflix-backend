@@ -32,7 +32,13 @@ const update = async (userId, regBody) => {
 // get all users
 const getAllUSers = async (filters) => {
   try {
-    const users = await userModels.getAllUsers(filters);
+    const page = parseInt(filters.page) || 1;
+    const limit = parseInt(filters.limit) || 10;
+    const users = await userModels.getAllUsers({
+      ...filters,
+      page,
+      limit,
+    });
     return users;
   } catch (error) {
     throw error;

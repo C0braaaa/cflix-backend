@@ -175,9 +175,6 @@ const register = async (reqBody) => {
       role: "user",
       gender: "unknown",
       isActive: true,
-      playlist: [],
-      continue_watching: [],
-      favorite: [],
       createdAt: Date.now(),
       updatedAt: null,
     };
@@ -185,7 +182,9 @@ const register = async (reqBody) => {
     const createNewUser = await userModels.createNewUser(newUser);
 
     return createNewUser;
-  } catch (error) {}
+  } catch (error) {
+    throw error;
+  }
 };
 
 const forgotPassword = async (email) => {

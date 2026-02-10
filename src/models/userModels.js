@@ -78,15 +78,17 @@ const updateUser = async (id, data) => {
 };
 
 // get all users
-const getAllUsers = async ({ keyword, role, is_active }) => {
+const getAllUsers = async ({
+  keyword,
+  role,
+  is_active,
+  page = 1,
+  limit = 10,
+}) => {
   try {
     const query = {
       _destroy: false,
     };
-
-    // if (currentId) {
-    //   query._id = { $ne: new ObjectId(currentId) };
-    // }
 
     if (keyword) {
       const regex = { $regex: keyword, $options: "i" };
@@ -102,17 +104,44 @@ const getAllUsers = async ({ keyword, role, is_active }) => {
     }
 
     const db = await GET_DB();
-    const users = await db
+    const skip = (page - 1) * limit;
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const usersPromise = await db
       .collection(USER_COLLECTION_NAME)
       .find(query)
       .project({ password: 0 })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .toArray();
 
-    const total = await db
+    const totalPromise = await db
       .collection(USER_COLLECTION_NAME)
       .countDocuments(query);
-    return { users, total };
+
+    const countActivePromise = await db
+      .collection(USER_COLLECTION_NAME)
+      .countDocuments({ isActive: true, _destroy: false });
+
+    const countInactivePromise = await db
+      .collection(USER_COLLECTION_NAME)
+      .countDocuments({ isActive: false, _destroy: false });
+
+    const countNewTodayPromise = db
+      .collection(USER_COLLECTION_NAME)
+      .countDocuments({ createdAt: { $gte: startOfDay }, _destroy: false });
+
+    const [users, total, totalActive, totalInactive, totalNewToday] =
+      await Promise.all([
+        usersPromise,
+        totalPromise,
+        countActivePromise,
+        countInactivePromise,
+        countNewTodayPromise,
+      ]);
+    return { users, total, totalActive, totalInactive, totalNewToday };
   } catch (error) {
     throw error;
   }
