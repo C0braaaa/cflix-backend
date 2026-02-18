@@ -36,17 +36,26 @@ const increaseView = async (data) => {
   }
 };
 
-const getTopViewed = async (limit = 10, type = null) => {
+const getTopViewed = async ({ page, limit, type }) => {
   try {
     const db = await GET_DB();
     const query = type ? { type: type } : {};
-    const res = await db
+    const skip = (page - 1) * limit;
+    const dataPromise = db
       .collection(VIEWS_COLLECTION_NAME)
       .find(query)
       .sort({ views: -1 })
+      .skip(skip)
       .limit(limit)
       .toArray();
-    return res;
+
+    const totalPromise = db
+      .collection(VIEWS_COLLECTION_NAME)
+      .countDocuments(query);
+
+    const [data, total] = await Promise.all([dataPromise, totalPromise]);
+
+    return { data, total };
   } catch (error) {
     throw error;
   }

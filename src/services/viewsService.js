@@ -9,9 +9,15 @@ const increaseView = async (data) => {
   }
 };
 
-const getTopViewed = async (type) => {
+const getTopViewed = async (page, limit, type) => {
   try {
-    const res = await viewsModel.getTopViewed(10, type);
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const res = await viewsModel.getTopViewed({
+      page: pageNum,
+      limit: limitNum,
+      type,
+    });
     return res;
   } catch (error) {
     throw error;
