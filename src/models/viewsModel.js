@@ -36,26 +36,61 @@ const increaseView = async (data) => {
   }
 };
 
-const getTopViewed = async ({ page, limit, type }) => {
+const getTopViewed = async (type) => {
   try {
     const db = await GET_DB();
     const query = type ? { type: type } : {};
-    const skip = (page - 1) * limit;
+
     const dataPromise = db
       .collection(VIEWS_COLLECTION_NAME)
       .find(query)
       .sort({ views: -1 })
-      .skip(skip)
-      .limit(limit)
       .toArray();
 
-    const totalPromise = db
+    const highestPromise = db
       .collection(VIEWS_COLLECTION_NAME)
-      .countDocuments(query);
+      .find(query)
+      .project({
+        slug: 1,
+        name: 1,
+        origin_name: 1,
+        poster_url: 1,
+        views: 1,
+        _id: 0,
+      })
+      .sort({ views: -1 })
+      .limit(1)
+      .toArray();
 
-    const [data, total] = await Promise.all([dataPromise, totalPromise]);
+    const totalViewPromise = db
+      .collection(VIEWS_COLLECTION_NAME)
+      .aggregate([
+        { $match: query },
+        { $group: { _id: null, total: { $sum: "$views" } } },
+      ])
+      .toArray();
+    const topTypePromise = db
+      .collection(VIEWS_COLLECTION_NAME)
+      .aggregate([
+        { $match: query },
+        { $group: { _id: "$type", totalViews: { $sum: "$views" } } },
+        { $sort: { totalViews: -1 } },
+        { $limit: 1 },
+      ])
+      .toArray();
 
-    return { data, total };
+    const [data, highest, statsRes, topTypeRes] = await Promise.all([
+      dataPromise,
+      highestPromise,
+      totalViewPromise,
+      topTypePromise,
+    ]);
+    return {
+      data,
+      viewHighest: highest.length > 0 ? highest[0] : 0,
+      totalView: statsRes.length > 0 ? statsRes[0].total : 0,
+      topType: topTypeRes.length > 0 ? topTypeRes[0]._id : "Chưa có",
+    };
   } catch (error) {
     throw error;
   }

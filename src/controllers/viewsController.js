@@ -29,19 +29,16 @@ const increaseView = async (req, res) => {
 
 const getTopViewed = async (req, res) => {
   try {
-    const { page, limit, type } = req.query;
-    const result = await viewsServices.getTopViewed(page, limit, type);
+    const { type } = req.query;
+    const result = await viewsServices.getTopViewed(type);
 
-    const limitNum = parseInt(limit) || 10;
-    const pageNum = parseInt(page) || 1;
-    const totalPages = Math.ceil(result.total / limitNum);
     res.status(StatusCodes.OK).json({
       status: true,
-      message: "Lay danh sach trending thanh cong! ",
+      message: "Lay danh sach trending thanh cong!",
       data: result.data,
-      currentPage: pageNum,
-      totalPages: totalPages,
-      totalItems: result.total,
+      viewHighest: result.viewHighest,
+      totalView: result.totalView,
+      topType: result.topType,
     });
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
