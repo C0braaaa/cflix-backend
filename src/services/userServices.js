@@ -107,6 +107,7 @@ const toggleFavorite = async (userId, movieData) => {
         origin_name: movieData.origin_name,
         poster_url: movieData.poster_url,
         type: type,
+        updatedAt: new Date(),
       };
       await interactionModel.addInteraction(newItem);
       return { status: "added", newItem };
@@ -138,6 +139,7 @@ const togglePlaylist = async (userId, movieData) => {
         origin_name: movieData.origin_name,
         poster_url: movieData.poster_url,
         type: type,
+        updatedAt: new Date(),
       };
       await interactionModel.addInteraction(newItem);
       return { status: "added", newItem };
@@ -159,7 +161,6 @@ const saveProgress = async (userId, movieData) => {
       episode_name: movieData.episode_name,
       current_time: movieData.current_time,
       duration: movieData.duration,
-
       type: "continue_watching",
     };
 

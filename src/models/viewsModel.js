@@ -69,27 +69,36 @@ const getTopViewed = async (type) => {
         { $group: { _id: null, total: { $sum: "$views" } } },
       ])
       .toArray();
-    const topTypePromise = db
+    const statsByTypePromise = db
       .collection(VIEWS_COLLECTION_NAME)
       .aggregate([
         { $match: query },
-        { $group: { _id: "$type", totalViews: { $sum: "$views" } } },
-        { $sort: { totalViews: -1 } },
-        { $limit: 1 },
+        { $group: { _id: "$type", total: { $sum: "$views" } } },
       ])
       .toArray();
 
-    const [data, highest, statsRes, topTypeRes] = await Promise.all([
+    const [data, highest, statsRes, statsByTypeRes] = await Promise.all([
       dataPromise,
       highestPromise,
       totalViewPromise,
-      topTypePromise,
+      statsByTypePromise,
     ]);
+    const viewsByType = {
+      single: 0,
+      series: 0,
+      hoathinh: 0,
+      tvshows: 0,
+    };
+    statsByTypeRes.forEach((item) => {
+      if (viewsByType.hasOwnProperty(item._id)) {
+        viewsByType[item._id] = item.total;
+      }
+    });
     return {
       data,
       viewHighest: highest.length > 0 ? highest[0] : 0,
       totalView: statsRes.length > 0 ? statsRes[0].total : 0,
-      topType: topTypeRes.length > 0 ? topTypeRes[0]._id : "Chưa có",
+      viewsByType: viewsByType,
     };
   } catch (error) {
     throw error;

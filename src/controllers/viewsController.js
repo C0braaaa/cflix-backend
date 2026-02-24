@@ -38,7 +38,7 @@ const getTopViewed = async (req, res) => {
       data: result.data,
       viewHighest: result.viewHighest,
       totalView: result.totalView,
-      topType: result.topType,
+      viewsByType: result.viewsByType,
     });
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({

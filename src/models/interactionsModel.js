@@ -17,8 +17,8 @@ const INTERACTION_SCHEMA = Joi.object({
   episode_name: Joi.string().default(""),
   current_time: Joi.number().default(0),
   duration: Joi.number().default(0),
-  updated_at: Joi.date().timestamp("javascript").default(new Date()),
-  created_at: Joi.date().timestamp("javascript").default(new Date()),
+  updatedAt: Joi.date().timestamp("javascript").default(new Date()),
+  createdAt: Joi.date().timestamp("javascript").default(new Date()),
 });
 
 const createCollection = async () => {
