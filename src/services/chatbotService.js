@@ -43,9 +43,9 @@ const callKKPhimAPI = async (keyword) => {
 const chatWithAI = async (history) => {
   // 1. Khởi tạo model (Dùng gemini-pro)
   const model = genAI.getGenerativeModel({
-    model: "gemini-2.0-flash-lite",
+    model: "gemini-2.5-flash",
     tools: [{ functionDeclarations: [searchMovieTool] }],
-    systemInstruction: `Bạn là C-Bot, trợ lý chuyên về phim của website CFlix. 
+    systemInstruction: `Bạn là ◉ϟ⊕τ, trợ lý chuyên về phim của website CFlix. 
     1. Chỉ trả lời về phim. 
     2. Nếu người dùng hỏi ngoài phạm vi, đáp: "Câu hỏi này nằm ngoài phạm vi hỗ trợ của hệ thống."
     3. TUYỆT ĐỐI KHÔNG TỰ BỊA RA TÊN PHIM HAY SLUG.
@@ -77,8 +77,8 @@ const chatWithAI = async (history) => {
     },
   });
 
-  const result = await chat.sendMessage(userMessage);
-  const response = await result.response;
+  let result = await chat.sendMessage(userMessage);
+  let response = await result.response;
 
   const functionCalls = response.functionCalls();
   if (functionCalls && functionCalls.length > 0) {
