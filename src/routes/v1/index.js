@@ -7,6 +7,7 @@ import { ratingRoute } from "./ratingRoute";
 import { viewsRoute } from "./viewsRoute";
 import { notificationRoute } from "./notificationRoute";
 import { chatbotRoutes } from "./chatbotRoute";
+import { reportRoute } from "./reportRoute";
 
 const Router = express.Router();
 
@@ -18,4 +19,5 @@ Router.use("/rating", ratingRoute);
 Router.use("/trending", viewsRoute);
 Router.use("/notifications", notificationRoute);
 Router.use("/chatbot", chatbotRoutes);
+Router.use("/report", reportRoute);
 export const APIs_V1 = Router;
