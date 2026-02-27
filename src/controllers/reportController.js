@@ -71,8 +71,65 @@ const getReportStats = async (req, res, next) => {
   }
 };
 
+const deleteReport = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const result = await reportService.deleteReport(id);
+
+    // Kiểm tra xem có document nào bị xóa không
+    if (result.deletedCount === 0) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        status: false,
+        message: "Không tìm thấy phản hồi này hoặc đã bị xóa trước đó.",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      message: "Xóa phản hồi thành công",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const upadteStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["pending", "processing", "resolved"];
+    if (!validStatuses.includes(status)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        status: false,
+        message: "Trạng thái không hợp lệ!",
+      });
+    }
+
+    const updatedReport = await reportService.updateStatus(id, status);
+
+    if (!updatedReport) {
+      return res.status(StatusCodes.NOT_FOUND).json({
+        status: false,
+        message: "Không tìm thấy phản hồi này!",
+      });
+    }
+
+    res.status(StatusCodes.OK).json({
+      status: true,
+      message: "Cập nhật trạng thái thành công!",
+      data: updatedReport,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const reportController = {
   createReport,
   getAllReports,
   getReportStats,
+  deleteReport,
+  upadteStatus,
 };

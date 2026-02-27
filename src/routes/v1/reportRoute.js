@@ -18,4 +18,15 @@ Router.route("/")
     reportController.getAllReports,
   );
 
+Router.route("/:id").delete(
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  reportController.deleteReport,
+);
+
+Router.route("/:id/status").put(
+  authMiddleware.verifyToken,
+  authMiddleware.verifyAdmin,
+  reportController.upadteStatus,
+);
 export const reportRoute = Router;

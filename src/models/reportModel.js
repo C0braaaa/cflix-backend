@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { GET_DB } from "~/config/mongodb";
-import { ObjectId } from "mongodb";
+import { ObjectId, ReturnDocument } from "mongodb";
 
 const REPORT_COLLECTION_NAME = "reports";
 
@@ -81,7 +81,7 @@ const getAllReports = async ({ type, status, page = 1, limit = 10 }) => {
 
 const getReportStats = async () => {
   try {
-    const db = GET_DB();
+    const db = await GET_DB();
 
     const [totalReport, pendingReport, movieReport, commentReport] =
       await Promise.all([
@@ -101,10 +101,41 @@ const getReportStats = async () => {
   }
 };
 
+const deleteReport = async (id) => {
+  try {
+    const db = await GET_DB();
+    const result = await db
+      .collection(REPORT_COLLECTION_NAME)
+      .deleteOne({ _id: new ObjectId(id) });
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateStatus = async (id, status) => {
+  try {
+    const db = await GET_DB();
+
+    const result = await db
+      .collection(REPORT_COLLECTION_NAME)
+      .updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { status, updatedAt: new Date() } },
+        { ReturnDocument: "after" },
+      );
+
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
 export const reportModel = {
   REPORT_COLLECTION_NAME,
   REPORT_SCHEMA,
   createReport,
   getAllReports,
   getReportStats,
+  deleteReport,
+  updateStatus,
 };

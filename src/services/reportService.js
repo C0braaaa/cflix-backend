@@ -23,8 +23,26 @@ const getReportStats = async () => {
     throw error;
   }
 };
+
+const deleteReport = async (id) => {
+  try {
+    return await reportModel.deleteReport(id);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const updateStatus = async (id, data) => {
+  try {
+    return await reportModel.updateStatus(id, data);
+  } catch (error) {
+    throw error;
+  }
+};
 export const reportService = {
   createReport,
   getAllReports,
   getReportStats,
+  deleteReport,
+  updateStatus,
 };
