@@ -1,5 +1,5 @@
 import express from "express";
-import { trafficController } from "~/controllers/trafficCOntroller";
+import { trafficController } from "~/controllers/trafficController";
 import { authMiddleware } from "~/middlewares/authMiddleware";
 
 const Router = express.Router();
