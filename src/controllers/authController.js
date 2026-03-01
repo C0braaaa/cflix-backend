@@ -7,8 +7,8 @@ const login = async (req, res) => {
     // save Token to cookie
     res.cookie("accessToken", result.accessToken, {
       httpOnly: true,
-      secure: false, // localhost dể false, prod để true
-      sameSite: "lax",
+      secure: true, // localhost dể false, prod để true
+      sameSite: "none",
       path: "/",
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
@@ -33,8 +33,8 @@ const loginGoogle = async (req, res) => {
 
     res.cookie("accessToken", result.accessToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       path: "/",
       maxAge: 24 * 60 * 60 * 1000, // i day
     });
@@ -55,8 +55,8 @@ const loginGoogle = async (req, res) => {
 const logout = async (req, res) => {
   res.clearCookie("accessToken", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     path: "/",
   });
   return res.status(StatusCodes.OK).json({

@@ -222,6 +222,6 @@ This project is licensed under the **MIT License** – see `LICENSE` for details
 
 ## 👨‍💻 Author
 
-**HieuC0raDev**
+**C0braaaa**
 –– Building modern full‑stack applications.
 Feel free to connect on GitHub!
