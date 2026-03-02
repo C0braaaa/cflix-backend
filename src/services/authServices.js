@@ -37,9 +37,6 @@ const loginGoogle = async (credential) => {
         gender: "unknown",
         isActive: true,
         authType: "google",
-        playlist: [],
-        continue_watching: [],
-        favorite: [],
         createdAt: Date.now(),
         updatedAt: null,
       };
