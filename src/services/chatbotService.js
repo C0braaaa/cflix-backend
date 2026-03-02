@@ -1,168 +1,319 @@
-//
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { env } from "~/config/environment";
 import axios from "axios";
 import { viewsServices } from "./viewsService";
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
-const searchMovieTool = {
-  name: "search_kkphim",
-  description:
-    "Dùng để tìm kiếm phim trên hệ thống KKPhim khi người dùng hỏi về một bộ phim cụ thể hoặc cần gợi ý phim.",
-  parameters: {
-    type: "OBJECT",
-    properties: {
-      keyword: {
-        type: "STRING",
-        description:
-          "Từ khóa tìm kiếm phim (VD: 'Người nhện', 'Hành động', 'Tình cảm')",
-      },
-    },
-    required: ["keyword"],
-  },
-};
-
-const getTopViewedTool = {
-  name: "get_top_viewed_movies",
-  description:
-    "Dùng để lấy danh sách các phim có lượt xem cao nhất, top phim thịnh hành, hoặc bộ phim hot nhất trên hệ thống CFlix.",
-  parameters: {
-    type: "OBJECT",
-    properties: {
-      type: {
-        type: "STRING",
-        description:
-          "Loại thống kê: 'day' (ngày), 'week' (tuần), 'month' (tháng). Mặc định là 'all' (tất cả thời gian).",
+// 1. BỘ TỨ CÔNG CỤ TỐI THƯỢNG CHO AI
+const tools = [
+  {
+    type: "function",
+    function: {
+      name: "search_kkphim",
+      description:
+        "DÙNG KHI người dùng hỏi đích danh TÊN 1 bộ phim cụ thể (VD: 'Tìm phim Người Nhện').",
+      parameters: {
+        type: "object",
+        properties: {
+          keyword: {
+            type: "string",
+            description: "Tên chính xác của bộ phim.",
+          },
+        },
+        required: ["keyword"],
       },
     },
   },
-};
+  {
+    type: "function",
+    function: {
+      name: "get_movies_by_genre",
+      description:
+        "DÙNG KHI người dùng muốn tìm phim theo THỂ LOẠI (VD: phim hành động, phim ma, phim hài...).",
+      parameters: {
+        type: "object",
+        properties: {
+          genre_slug: {
+            type: "string",
+            enum: [
+              "hanh-dong",
+              "mien-tay",
+              "tre-em",
+              "lich-su",
+              "co-trang",
+              "chien-tranh",
+              "vien-tuong",
+              "kinh-di",
+              "tai-lieu",
+              "bi-an",
+              "tinh-cam",
+              "tam-ly",
+              "the-thao",
+              "phieu-luu",
+              "am-nhac",
+              "gia-dinh",
+              "hoc-duong",
+              "hai-huoc",
+              "hinh-su",
+              "vo-thuat",
+              "khoa-hoc",
+              "than-thoai",
+              "chinh-kich",
+              "kinh-dien",
+            ],
+          },
+        },
+        required: ["genre_slug"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_movies_by_country",
+      description:
+        "DÙNG KHI người dùng muốn tìm phim theo QUỐC GIA (có hoặc không có NĂM).",
+      parameters: {
+        type: "object",
+        properties: {
+          country_slug: {
+            type: "string",
+            enum: [
+              "viet-nam",
+              "trung-quoc",
+              "thai-lan",
+              "hong-kong",
+              "phap",
+              "duc",
+              "ha-lan",
+              "mexico",
+              "thuy-dien",
+              "philippines",
+              "dan-mach",
+              "thuy-si",
+              "ukraina",
+              "han-quoc",
+              "au-my",
+              "an-do",
+              "canada",
+              "tay-ban-nha",
+              "indonesia",
+              "ba-lan",
+              "malaysia",
+              "bo-dao-nha",
+              "uae",
+              "chau-phi",
+              "a-rap-xe-ut",
+              "nhat-ban",
+              "dai-loan",
+              "anh",
+              "tho-nhi-ky",
+              "nga",
+              "uc",
+              "brazil",
+              "y",
+              "na-uy",
+              "nam-phi",
+            ],
+            description:
+              "Slug của quốc gia tương ứng. VD: 'Hàn Quốc' -> 'han-quoc'.",
+          },
+          year: {
+            type: "string",
+            description:
+              "Năm phát hành (VD: '2023'). Nếu người dùng KHÔNG nhắc đến năm, BẮT BUỘC truyền vào chuỗi rỗng ''.",
+          },
+        },
+        required: ["country_slug", "year"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_top_viewed_movies",
+      description:
+        "BẮT BUỘC DÙNG khi người dùng hỏi: phim xem nhiều nhất, top phim, phim thịnh hành, phim hot.",
+      parameters: { type: "object", properties: {} },
+    },
+  },
+];
 
+// --- CÁC HÀM XỬ LÝ API ---
 const callKKPhimAPI = async (keyword) => {
   try {
     const res = await axios.get(
       `https://phimapi.com/v1/api/tim-kiem?keyword=${encodeURIComponent(keyword)}`,
     );
-    if (res.data && res.data.data && res.data.data.items) {
-      const movies = res.data.data.items.slice(0, 5).map((item) => ({
-        name: item.name,
-        slug: item.slug,
-      }));
-      return { movies };
-    }
-    return { movies: [], message: "Không tìm thấy phim này trên hệ thống." };
+    if (res.data?.data?.items?.length > 0)
+      return {
+        movies: res.data.data.items
+          .slice(0, 5)
+          .map((i) => ({ name: i.name, slug: i.slug })),
+      };
+    return { movies: [], message: "Không tìm thấy phim này." };
   } catch (error) {
-    return { error: "Lỗi khi gọi API hệ thống KKPhim." };
+    return { error: "Lỗi hệ thống KKPhim." };
   }
 };
 
-const callTopViewedAPI = async (type = "") => {
+const callKKPhimGenreAPI = async (genre_slug) => {
   try {
-    // Gọi thẳng logic backend, lấy top phim
-    const res = await viewsServices.getTopViewed(type);
+    const res = await axios.get(
+      `https://phimapi.com/v1/api/the-loai/${genre_slug}?limit=5`,
+    );
+    if (res.data?.data?.items?.length > 0)
+      return {
+        movies: res.data.data.items
+          .slice(0, 5)
+          .map((i) => ({ name: i.name, slug: i.slug })),
+        message: `Đã tìm thấy phim cho thể loại: ${genre_slug}`,
+      };
+    return { movies: [], message: "Hiện chưa có phim cho thể loại này." };
+  } catch (error) {
+    return { error: "Lỗi hệ thống KKPhim." };
+  }
+};
 
-    // Format lại data cho ngắn gọn để nhồi cho AI, tránh bị quá tải Token
-    let moviesData = [];
-    if (res && res.data && res.data.length > 0) {
-      moviesData = res.data;
-    } else if (Array.isArray(res)) {
-      moviesData = res;
+const callKKPhimCountryAPI = async (country_slug, year) => {
+  try {
+    let url = `https://phimapi.com/v1/api/quoc-gia/${country_slug}?limit=5`;
+
+    if (year && year.trim() !== "") {
+      url += `&year=${year}`;
     }
 
-    if (moviesData.length > 0) {
-      const topMovies = moviesData.slice(0, 5).map((item) => ({
-        name: item.name,
-        views: item.views,
-        slug: item.slug,
-      }));
+    const res = await axios.get(url);
+    if (res.data?.data?.items?.length > 0) {
       return {
-        movies: topMovies,
-        message: "Lấy danh sách top phim thành công.",
+        movies: res.data.data.items
+          .slice(0, 5)
+          .map((i) => ({ name: i.name, slug: i.slug })),
+        message: `Đã tìm thấy phim quốc gia: ${country_slug}${year && year.trim() !== "" ? ` năm ${year}` : ""}`,
+      };
+    }
+    return {
+      movies: [],
+      message: `Hiện chưa có phim quốc gia này${year && year.trim() !== "" ? ` trong năm ${year}` : ""}.`,
+    };
+  } catch (error) {
+    return { error: "Lỗi hệ thống KKPhim khi tìm quốc gia." };
+  }
+};
+
+const callTopViewedAPI = async () => {
+  try {
+    const res = await viewsServices.getTopViewed("");
+    let moviesData = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+          ? res.data.data
+          : [];
+    if (moviesData.length > 0)
+      return {
+        movies: moviesData.slice(0, 5).map((item) => ({
+          name: item.name,
+          views: item.views,
+          slug: item.slug,
+        })),
+        message: "Lấy top phim thành công.",
+      };
+    return { movies: [], message: "Hiện chưa có dữ liệu thống kê phim." };
+  } catch (error) {
+    return { error: "Lỗi lấy top phim." };
+  }
+};
+
+// --- LOGIC CHAT ---
+const chatWithAI = async (history) => {
+  try {
+    const systemInstruction = `Bạn là ◉ϟ⊕τ (đọc là C-Bot), trợ lý AI ảo cực kỳ thông minh của website CFlix.
+
+TUYỆT ĐỐI TUÂN THỦ CÁC LUẬT SAU:
+1. GIAO TIẾP: Luôn lịch sự, tự xưng là ◉ϟ⊕τ của CFlix. Từ chối trả lời các câu hỏi không liên quan đến phim ảnh (thời tiết, toán học, v.v.).
+2. TÌM TÊN PHIM: Dùng 'search_kkphim' khi khách hỏi TÊN 1 bộ phim.
+3. TÌM THEO THỂ LOẠI: Khách hỏi phim theo thể loại (VD: kinh dị, hài, hành động) -> BẮT BUỘC dùng 'get_movies_by_genre'.
+4. TÌM THEO QUỐC GIA (VÀ NĂM): Khách hỏi phim theo quốc gia (VD: phim Hàn Quốc, phim Thái Lan, phim Âu Mỹ năm 2023) -> BẮT BUỘC dùng 'get_movies_by_country'. Nếu khách có nói năm, hãy nhớ truyền năm vào.
+5. PHIM HOT: Khách hỏi phim hot, top view -> Dùng 'get_top_viewed_movies'.
+6. FORMAT KẾT QUẢ: Mọi danh sách phim lấy từ Tool đều PHẢI trả về định dạng đính kèm link Markdown: [Tên Phim](/phim/slug-phim).
+7. TỰ CHÉM GIÓ: Chỉ khi khách hỏi những chủ đề rất mơ hồ không thuộc công cụ (VD: "phim về robot ngoài hành tinh"), bạn được phép tự gợi ý 3 phim bằng kiến thức của bạn. CHỈ IN TÊN PHIM, KHÔNG TỰ TẠO LINK MARKDOWN.
+8. KHÔNG BAO GIWOF TRẢ LỜI NHỮNG CÂU HỎI KHÔNG LIÊN QUAN ĐẾN PHIM ẢNH. LUÔN TỪ CHỐI LỊCH SỰ VỚI NHỮNG CÂU HỎI NGOÀI LĨNH VỰC PHIM ẢNH.`;
+
+    const cleanHistory = history.map((msg) => {
+      const isBot =
+        msg.role === "model" ||
+        msg.role === "C-Bot" ||
+        msg.role === "assistant";
+      return { role: isBot ? "assistant" : "user", content: msg.content || "" };
+    });
+
+    let messages = [
+      { role: "system", content: systemInstruction },
+      ...cleanHistory,
+    ];
+
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: messages,
+      tools: tools,
+      tool_choice: "auto",
+      temperature: 0.7,
+      max_tokens: 1024,
+    });
+
+    const responseMessage = response.choices[0].message;
+
+    if (responseMessage.tool_calls) {
+      messages.push(responseMessage);
+
+      for (const toolCall of responseMessage.tool_calls) {
+        let apiResult;
+        const functionName = toolCall.function.name;
+        const args = JSON.parse(toolCall.function.arguments);
+
+        console.log(`[Groq AI] Gọi Tool: ${functionName}`, args);
+
+        if (functionName === "search_kkphim") {
+          apiResult = await callKKPhimAPI(args.keyword);
+        } else if (functionName === "get_movies_by_genre") {
+          apiResult = await callKKPhimGenreAPI(args.genre_slug);
+        } else if (functionName === "get_movies_by_country") {
+          // Bắt thêm Tool mới: truyền cả Quốc gia và Năm (nếu có)
+          apiResult = await callKKPhimCountryAPI(args.country_slug, args.year);
+        } else if (functionName === "get_top_viewed_movies") {
+          apiResult = await callTopViewedAPI();
+        }
+
+        messages.push({
+          tool_call_id: toolCall.id,
+          role: "tool",
+          name: functionName,
+          content: JSON.stringify(apiResult),
+        });
+      }
+
+      const finalResponse = await groq.chat.completions.create({
+        model: "llama-3.3-70b-versatile",
+        messages: messages,
+        temperature: 0.7,
+      });
+      return {
+        role: "assistant",
+        content: finalResponse.choices[0].message.content,
       };
     }
 
-    return { movies: [], message: "Hiện chưa có dữ liệu thống kê phim." };
+    return { role: "assistant", content: responseMessage.content };
   } catch (error) {
-    return { error: "Lỗi hệ thống khi lấy top phim." };
+    console.error("Lỗi Chatbot:", error);
+    return {
+      role: "assistant",
+      content: "Hệ thống đang bận, vui lòng thử lại sau!",
+    };
   }
 };
 
-const chatWithAI = async (history) => {
-  // 1. Khởi tạo model (Dùng gemini-pro)
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    tools: [{ functionDeclarations: [searchMovieTool, getTopViewedTool] }],
-    systemInstruction: `Bạn là ◉ϟ⊕τ, trợ lý chuyên về phim của website CFlix. 
-    1. Chỉ trả lời về phim. 
-    2. Nếu người dùng hỏi ngoài phạm vi, đáp: "Câu hỏi này nằm ngoài phạm vi hỗ trợ của hệ thống. Hãy hỏi câu hỏi liên quan đến phim ảnh."
-    3. TUYỆT ĐỐI KHÔNG TỰ BỊA RA TÊN PHIM HAY SLUG.
-    4. Khi người dùng hỏi tên phim, phải dùng công cụ 'search_kkphim' để tìm kiếm. 
-    5. Khi người dùng hỏi về "phim xem nhiều nhất", "top phim", "phim hot", BẮT BUỘC dùng công cụ 'get_top_viewed_movies'.
-    6. Khi đã có kết quả từ 'search_kkphim', hãy trả lời và đính kèm link theo định dạng Markdown: [Tên Phim](/phim/slug-phim).
-    7. Nếu công cụ trả về không có phim, hãy báo xin lỗi và nói hệ thống chưa cập nhật phim này.
-    8. Nếu người dùng hỏi bạn là ai thì trả lời bạn là ◉ϟ⊕τ, trợ lý chuyên về phim của website CFlix.
-    9. Nếu người dùng chào bạn thì bạn sẽ giới thiệu bạn là ◉ϟ⊕τ, trợ lý chuyên về phim của website CFlix và hỏi người dùng muốn tìm phim gì hoặc cần gợi ý phim nào.
-    10. Nếu người dùng hỏi về có phim nào hay, hoặc hiện nay có phim nào hay không thì bạn cứ lên mạng tìm và hiển thị ra cho người dùng, tầm 1 đến 5 phim thôi, 
-    không cần phải theo định dạng Markdown: [Tên Phim](/phim/slug-phim). Chỉ cần trả lời bình thường nhớ không tự bịa slug `,
-  });
-
-  // 2. Chuyển đổi format history từ OpenAI sang Gemini
-  // Gemini yêu cầu role là 'user' và 'model'
-  let cleanHistory = [...history];
-  while (cleanHistory.length > 0 && cleanHistory[0].role !== "user") {
-    cleanHistory.shift();
-  }
-  const chatHistory = cleanHistory.map((msg) => ({
-    role: msg.role === "user" ? "user" : "model",
-    parts: [{ text: msg.content }],
-  }));
-
-  // Lấy tin nhắn mới nhất của người dùng
-  const userMessage = chatHistory.pop().parts[0].text;
-
-  // 3. Khởi tạo phiên chat và gửi tin nhắn
-  const chat = model.startChat({
-    history: chatHistory,
-    generationConfig: {
-      maxOutputTokens: 1000,
-      temperature: 0.7,
-    },
-  });
-
-  let result = await chat.sendMessage(userMessage);
-  let response = await result.response;
-
-  const functionCalls = response.functionCalls();
-  if (functionCalls && functionCalls.length > 0) {
-    const call = functionCalls[0];
-    let apiResult;
-
-    if (call.name === "search_kkphim") {
-      apiResult = await callKKPhimAPI(call.args.keyword);
-    } else if (call.name === "get_top_viewed_movies") {
-      apiResult = await callTopViewedAPI(call.args.type);
-    }
-
-    if (apiResult) {
-      result = await chat.sendMessage([
-        {
-          functionResponse: {
-            name: call.name,
-            response: apiResult,
-          },
-        },
-      ]);
-      response = await result.response;
-    }
-  }
-
-  return {
-    role: "assistant",
-    content: response.text(),
-  };
-};
-
-export const chatbotService = {
-  chatWithAI,
-};
+export const chatbotService = { chatWithAI };
