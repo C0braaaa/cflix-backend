@@ -84,6 +84,7 @@ const register = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(">>> Request nhận được email:", email);
     if (!email) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: "Vui lòng cung cấp Email!",

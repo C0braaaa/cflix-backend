@@ -9,6 +9,7 @@ import { Server } from "socket.io";
 
 const START_SERVER = () => {
   const app = express();
+  app.set("trust proxy", 1);
 
   const httpServer = createServer(app);
 
