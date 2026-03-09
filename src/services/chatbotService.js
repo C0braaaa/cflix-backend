@@ -5,19 +5,24 @@ import { viewsServices } from "./viewsService";
 
 const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
+const stripFakeMarkdownLinks = (text) => {
+  if (!text) return text;
+  return text.replace(/\[([^\]]+)\]\(\/phim\/[^)]+\)/g, "$1");
+};
+
 const tools = [
   {
     type: "function",
     function: {
       name: "search_kkphim",
       description:
-        "DÙNG KHI người dùng hỏi đích danh TÊN 1 bộ phim cụ thể (VD: 'Tìm phim Người Nhện').",
+        "CHỈ dùng khi người dùng hỏi TÊN CỤ THỂ của một bộ phim (VD: 'Tìm phim Avengers', 'phim Người Nhện', 'phim Inception'). KHÔNG dùng cho các câu hỏi chung chung như 'phim hay', 'gợi ý phim', 'phim nào xem được'.",
       parameters: {
         type: "object",
         properties: {
           keyword: {
             type: "string",
-            description: "Tên chính xác của bộ phim.",
+            description: "Tên cụ thể của bộ phim cần tìm.",
           },
         },
         required: ["keyword"],
@@ -27,119 +32,14 @@ const tools = [
   {
     type: "function",
     function: {
-      name: "get_movies_by_genre",
-      description:
-        "DÙNG KHI người dùng muốn tìm phim theo THỂ LOẠI (VD: phim hành động, phim ma, phim hài...).",
-      parameters: {
-        type: "object",
-        properties: {
-          genre_slug: {
-            type: "string",
-            enum: [
-              "hanh-dong",
-              "mien-tay",
-              "tre-em",
-              "lich-su",
-              "co-trang",
-              "chien-tranh",
-              "vien-tuong",
-              "kinh-di",
-              "tai-lieu",
-              "bi-an",
-              "tinh-cam",
-              "tam-ly",
-              "the-thao",
-              "phieu-luu",
-              "am-nhac",
-              "gia-dinh",
-              "hoc-duong",
-              "hai-huoc",
-              "hinh-su",
-              "vo-thuat",
-              "khoa-hoc",
-              "than-thoai",
-              "chinh-kich",
-              "kinh-dien",
-            ],
-          },
-        },
-        required: ["genre_slug"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "get_movies_by_country",
-      description:
-        "DÙNG KHI người dùng muốn tìm phim theo QUỐC GIA (có hoặc không có NĂM).",
-      parameters: {
-        type: "object",
-        properties: {
-          country_slug: {
-            type: "string",
-            enum: [
-              "viet-nam",
-              "trung-quoc",
-              "thai-lan",
-              "hong-kong",
-              "phap",
-              "duc",
-              "ha-lan",
-              "mexico",
-              "thuy-dien",
-              "philippines",
-              "dan-mach",
-              "thuy-si",
-              "ukraina",
-              "han-quoc",
-              "au-my",
-              "an-do",
-              "canada",
-              "tay-ban-nha",
-              "indonesia",
-              "ba-lan",
-              "malaysia",
-              "bo-dao-nha",
-              "uae",
-              "chau-phi",
-              "a-rap-xe-ut",
-              "nhat-ban",
-              "dai-loan",
-              "anh",
-              "tho-nhi-ky",
-              "nga",
-              "uc",
-              "brazil",
-              "y",
-              "na-uy",
-              "nam-phi",
-            ],
-            description:
-              "Slug của quốc gia tương ứng. VD: 'Hàn Quốc' -> 'han-quoc'.",
-          },
-          year: {
-            type: "string",
-            description:
-              "Năm phát hành (VD: '2023'). Nếu người dùng KHÔNG nhắc đến năm, BẮT BUỘC truyền vào chuỗi rỗng ''.",
-          },
-        },
-        required: ["country_slug", "year"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
       name: "get_top_viewed_movies",
       description:
-        "BẮT BUỘC DÙNG khi người dùng hỏi: phim xem nhiều nhất, top phim, phim thịnh hành, phim hot.",
+        "CHỈ dùng khi người dùng hỏi rõ ràng về: top phim, phim xem nhiều nhất, phim hot, phim trending, phim thịnh hành trên CFlix. KHÔNG dùng cho các câu hỏi gợi ý phim thông thường.",
       parameters: { type: "object", properties: {} },
     },
   },
 ];
 
-// --- CÁC HÀM XỬ LÝ API ---
 const callKKPhimAPI = async (keyword) => {
   try {
     const res = await axios.get(
@@ -154,50 +54,6 @@ const callKKPhimAPI = async (keyword) => {
     return { movies: [], message: "Không tìm thấy phim này." };
   } catch (error) {
     return { error: "Lỗi hệ thống KKPhim." };
-  }
-};
-
-const callKKPhimGenreAPI = async (genre_slug) => {
-  try {
-    const res = await axios.get(
-      `https://phimapi.com/v1/api/the-loai/${genre_slug}?limit=5`,
-    );
-    if (res.data?.data?.items?.length > 0)
-      return {
-        movies: res.data.data.items
-          .slice(0, 5)
-          .map((i) => ({ name: i.name, slug: i.slug })),
-        message: `Đã tìm thấy phim cho thể loại: ${genre_slug}`,
-      };
-    return { movies: [], message: "Hiện chưa có phim cho thể loại này." };
-  } catch (error) {
-    return { error: "Lỗi hệ thống KKPhim." };
-  }
-};
-
-const callKKPhimCountryAPI = async (country_slug, year) => {
-  try {
-    let url = `https://phimapi.com/v1/api/quoc-gia/${country_slug}?limit=5`;
-
-    if (year && year.trim() !== "") {
-      url += `&year=${year}`;
-    }
-
-    const res = await axios.get(url);
-    if (res.data?.data?.items?.length > 0) {
-      return {
-        movies: res.data.data.items
-          .slice(0, 5)
-          .map((i) => ({ name: i.name, slug: i.slug })),
-        message: `Đã tìm thấy phim quốc gia: ${country_slug}${year && year.trim() !== "" ? ` năm ${year}` : ""}`,
-      };
-    }
-    return {
-      movies: [],
-      message: `Hiện chưa có phim quốc gia này${year && year.trim() !== "" ? ` trong năm ${year}` : ""}.`,
-    };
-  } catch (error) {
-    return { error: "Lỗi hệ thống KKPhim khi tìm quốc gia." };
   }
 };
 
@@ -226,37 +82,49 @@ const callTopViewedAPI = async () => {
   }
 };
 
-// --- LOGIC CHAT ---
+// Fallback: gọi lại AI không dùng tool khi có lỗi tool_use_failed
+const chatWithoutTools = async (messages) => {
+  const fallbackMessages = messages.filter((m) => m.role !== "tool");
+  const response = await groq.chat.completions.create({
+    model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    messages: fallbackMessages,
+    temperature: 0.7,
+    max_tokens: 1024,
+  });
+  return stripFakeMarkdownLinks(response.choices[0].message.content);
+};
+
 const chatWithAI = async (history) => {
+  const systemInstruction = `Bạn là Jarvis, trợ lý AI thông minh của website xem phim CFlix.
+
+NGUYÊN TẮC HOẠT ĐỘNG:
+1. PHẠM VI TRẢ LỜI: Bạn chỉ tư vấn về lĩnh vực phim ảnh và giải trí. Bao gồm: thông tin phim, diễn viên, đạo diễn, thể loại, cốt truyện, đánh giá phim, lịch sử điện ảnh, gợi ý phim,...
+2. CÂU HỎI NGOÀI PHẠM VI: Nếu người dùng hỏi những chủ đề không liên quan đến phim ảnh (thời tiết, toán học, lập trình, tin tức,...), hãy lịch sự từ chối: "Xin lỗi, tôi chỉ có thể hỗ trợ các câu hỏi liên quan đến phim ảnh và giải trí. Bạn có muốn tôi gợi ý một bộ phim hay không? 🎬"
+3. NỘI DUNG THÔ TỤC: Tuyệt đối không trả lời các câu hỏi thô tục, khiếm nhã hoặc không phù hợp.
+
+SỬ DỤNG CÔNG CỤ:
+4. TÌM TÊN PHIM: Dùng 'search_kkphim' CHỈ KHI người dùng hỏi TÊN CỤ THỂ của một bộ phim.
+5. PHIM HOT / TOP VIEW: Dùng 'get_top_viewed_movies' CHỈ KHI người dùng hỏi top phim, phim xem nhiều nhất, phim hot/trending trên CFlix.
+6. FORMAT KẾT QUẢ TỪ TOOL: Mọi danh sách phim lấy từ Tool đều PHẢI trả về kèm link Markdown: [Tên Phim](/phim/slug-phim).
+
+TRẢ LỜI TỰ DO (không dùng Tool):
+7. Các câu hỏi chung về phim (gợi ý phim hay, phim theo thể loại, theo quốc gia, thông tin diễn viên,...) thì trả lời bằng kiến thức của bạn. KHÔNG tự tạo link Markdown, chỉ liệt kê tên phim thôi.
+8. Luôn nhiệt tình, thân thiện và xưng là Jarvis của CFlix.`;
+
+  const cleanHistory = history.map((msg) => {
+    const isBot =
+      msg.role === "model" || msg.role === "C-Bot" || msg.role === "assistant";
+    return { role: isBot ? "assistant" : "user", content: msg.content || "" };
+  });
+
+  let messages = [
+    { role: "system", content: systemInstruction },
+    ...cleanHistory,
+  ];
+
   try {
-    const systemInstruction = `Bạn là Jarvis, trợ lý AI ảo cực kỳ thông minh của website CFlix.
-
-TUYỆT ĐỐI TUÂN THỦ CÁC LUẬT SAU:
-1. GIAO TIẾP: Luôn lịch sự, tự xưng là Jarvis của CFlix. Từ chối trả lời các câu hỏi không liên quan đến phim ảnh (thời tiết, toán học, v.v.).
-2. TÌM TÊN PHIM: Dùng 'search_kkphim' khi khách hỏi TÊN 1 bộ phim.
-3. TÌM THEO THỂ LOẠI: Khách hỏi phim theo thể loại (VD: kinh dị, hài, hành động) -> BẮT BUỘC dùng 'get_movies_by_genre'.
-4. TÌM THEO QUỐC GIA (VÀ NĂM): Khách hỏi phim theo quốc gia (VD: phim Hàn Quốc, phim Thái Lan, phim Âu Mỹ năm 2023) -> BẮT BUỘC dùng 'get_movies_by_country'. Nếu khách có nói năm, hãy nhớ truyền năm vào.
-5. PHIM HOT: Khách hỏi phim hot, top view -> Dùng 'get_top_viewed_movies'.
-6. FORMAT KẾT QUẢ: Mọi danh sách phim lấy từ Tool đều PHẢI trả về định dạng đính kèm link Markdown: [Tên Phim](/phim/slug-phim).
-7. TỰ CHÉM GIÓ: Chỉ khi khách hỏi những chủ đề rất mơ hồ không thuộc công cụ (VD: "phim về robot ngoài hành tinh"), bạn được phép tự gợi ý 3 phim bằng kiến thức của bạn. CHỈ IN TÊN PHIM, KHÔNG TỰ TẠO LINK MARKDOWN.
-8. KHÔNG BAO GIWOF TRẢ LỜI NHỮNG CÂU HỎI KHÔNG LIÊN QUAN ĐẾN PHIM ẢNH. LUÔN TỪ CHỐI LỊCH SỰ VỚI NHỮNG CÂU HỎI NGOÀI LĨNH VỰC PHIM ẢNH.
-9. Nếu người dùng hỏi gì về phim ảnh cứ trả lời thoải mái. Tuy nhiên nếu kết quả không lấy từ Tool thì không được trả lời dưới dạng link Markdown: [Tên Phim](/phim/slug-phim), mà liệt kê ra tầm 5 phim thôi! `;
-
-    const cleanHistory = history.map((msg) => {
-      const isBot =
-        msg.role === "model" ||
-        msg.role === "C-Bot" ||
-        msg.role === "assistant";
-      return { role: isBot ? "assistant" : "user", content: msg.content || "" };
-    });
-
-    let messages = [
-      { role: "system", content: systemInstruction },
-      ...cleanHistory,
-    ];
-
     const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: messages,
       tools: tools,
       tool_choice: "auto",
@@ -266,48 +134,74 @@ TUYỆT ĐỐI TUÂN THỦ CÁC LUẬT SAU:
 
     const responseMessage = response.choices[0].message;
 
-    if (responseMessage.tool_calls) {
-      messages.push(responseMessage);
-
-      for (const toolCall of responseMessage.tool_calls) {
-        let apiResult;
-        const functionName = toolCall.function.name;
-        const args = JSON.parse(toolCall.function.arguments);
-
-        console.log(`[Groq AI] Gọi Tool: ${functionName}`, args);
-
-        if (functionName === "search_kkphim") {
-          apiResult = await callKKPhimAPI(args.keyword);
-        } else if (functionName === "get_movies_by_genre") {
-          apiResult = await callKKPhimGenreAPI(args.genre_slug);
-        } else if (functionName === "get_movies_by_country") {
-          // Bắt thêm Tool mới: truyền cả Quốc gia và Năm (nếu có)
-          apiResult = await callKKPhimCountryAPI(args.country_slug, args.year);
-        } else if (functionName === "get_top_viewed_movies") {
-          apiResult = await callTopViewedAPI();
-        }
-
-        messages.push({
-          tool_call_id: toolCall.id,
-          role: "tool",
-          name: functionName,
-          content: JSON.stringify(apiResult),
-        });
-      }
-
-      const finalResponse = await groq.chat.completions.create({
-        model: "llama-3.3-70b-versatile",
-        messages: messages,
-        temperature: 0.7,
-      });
-      return {
-        role: "assistant",
-        content: finalResponse.choices[0].message.content,
-      };
+    // Không có tool call -> trả lời thẳng
+    if (!responseMessage.tool_calls) {
+      return { role: "assistant", content: responseMessage.content };
     }
 
-    return { role: "assistant", content: responseMessage.content };
+    // Có tool call -> xử lý từng tool
+    messages.push(responseMessage);
+
+    for (const toolCall of responseMessage.tool_calls) {
+      let apiResult;
+      const functionName = toolCall.function.name;
+
+      let args;
+      try {
+        args = JSON.parse(toolCall.function.arguments);
+      } catch (e) {
+        console.error(
+          `[Groq AI] Lỗi parse arguments:`,
+          toolCall.function.arguments,
+        );
+        args = {};
+      }
+
+      console.log(`[Groq AI] Gọi Tool: ${functionName}`, args);
+
+      if (functionName === "search_kkphim") {
+        apiResult = await callKKPhimAPI(args.keyword);
+      } else if (functionName === "get_top_viewed_movies") {
+        apiResult = await callTopViewedAPI();
+      } else {
+        apiResult = { error: `Tool không tồn tại: ${functionName}` };
+      }
+
+      messages.push({
+        tool_call_id: toolCall.id,
+        role: "tool",
+        name: functionName,
+        content: JSON.stringify(apiResult),
+      });
+    }
+
+    const finalResponse = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: messages,
+      tools: tools,
+      tool_choice: "none",
+      temperature: 0.7,
+    });
+
+    return {
+      role: "assistant",
+      content: finalResponse.choices[0].message.content,
+    };
   } catch (error) {
+    // Nếu lỗi tool_use_failed -> fallback trả lời không dùng tool
+    if (
+      error?.error?.error?.code === "tool_use_failed" ||
+      error?.status === 400
+    ) {
+      console.warn("[Groq AI] tool_use_failed, fallback không dùng tool...");
+      try {
+        const fallbackContent = await chatWithoutTools(messages);
+        return { role: "assistant", content: fallbackContent };
+      } catch (fallbackError) {
+        console.error("Lỗi fallback Chatbot:", fallbackError);
+      }
+    }
+
     console.error("Lỗi Chatbot:", error);
     return {
       role: "assistant",
