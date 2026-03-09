@@ -1,32 +1,30 @@
-import nodemailer from "nodemailer";
+import axios from "axios";
 import { env } from "~/config/environment";
 
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: Number(env.SMTP_PORT),
-    secure: true,
-    auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
-
-  const mailOptions = {
-    from: `"Cflix Support" <${env.SMTP_USER}>`,
-    to: options.email,
+  // Cấu hình dữ liệu theo chuẩn API của Brevo
+  const emailData = {
+    sender: { name: "Cflix Support", email: env.SMTP_USER },
+    to: [{ email: options.email }],
     subject: options.subject,
-    html: options.html,
+    htmlContent: options.html,
   };
 
   try {
-    const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", result.messageId);
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      emailData,
+      {
+        headers: {
+          accept: "application/json",
+          "api-key": env.SMTP_PASS,
+          "content-type": "application/json",
+        },
+      },
+    );
+    console.log("Email gửi thành công qua API:", response.data.messageId);
   } catch (error) {
-    console.log("Lỗi gửi mail cụ thể từ Brevo:", error); // Log này sẽ cứu vãn mọi thứ
+    console.error("Lỗi API Brevo:", error.response?.data || error.message);
   }
 };
 
