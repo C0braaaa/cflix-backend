@@ -1,28 +1,15 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { env } from "~/config/environment";
 
-const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: Number(env.SMTP_PORT),
-    secure: true,
-    auth: {
-      user: env.SMTP_USER,
-      pass: env.SMTP_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false,
-    },
-  });
+const resend = new Resend(env.RESEND_API_KEY);
 
-  const mailOptions = {
-    from: `"Cflix Support" <${env.SMTP_USER}>`,
+const sendEmail = async (options) => {
+  await resend.emails.send({
+    from: "Cflix Support <onboarding@resend.dev>",
     to: options.email,
     subject: options.subject,
     html: options.html,
-  };
-
-  await transporter.sendMail(mailOptions);
+  });
 };
 
 export default sendEmail;

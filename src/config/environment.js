@@ -17,4 +17,5 @@ export const env = {
   SMTP_PASS: process.env.SMTP_PASS,
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
   GROQ_API_KEY: process.env.GROQ_API_KEY,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
 };
