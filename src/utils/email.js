@@ -25,7 +25,12 @@ const sendEmail = async (options) => {
     html: options.html,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", result.messageId);
+  } catch (error) {
+    console.log("Lỗi gửi mail cụ thể từ Brevo:", error); // Log này sẽ cứu vãn mọi thứ
+  }
 };
 
 export default sendEmail;
