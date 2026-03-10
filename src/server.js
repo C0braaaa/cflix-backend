@@ -36,6 +36,10 @@ const START_SERVER = () => {
       socket.join(slug);
     });
 
+    socket.on("join_user_room", (userId) => {
+      socket.join(userId);
+    });
+
     socket.on("disconnect", () => {
       onlineUsersCount = Math.max(0, onlineUsersCount - 1);
       io.emit("online_users", onlineUsersCount);

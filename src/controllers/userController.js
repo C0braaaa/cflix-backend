@@ -123,6 +123,13 @@ const updateUserByID = async (req, res) => {
       });
     }
 
+    if (data.isActive === false) {
+      const io = req.app.get("socketio");
+      if (io) {
+        io.to(id.toString()).emit("account_locked");
+      }
+    }
+
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Update successfully",
