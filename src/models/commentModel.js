@@ -119,9 +119,10 @@ const getCommentById = async (id) => {
 const deleteComment = async (id) => {
   try {
     const db = await GET_DB();
+    const commnetId = new ObjectId(id);
     return await db
       .collection(COMMENT_COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(id) });
+      .deleteMany({ $or: [{ _id: commnetId }, { parent_id: id }] });
   } catch (error) {
     throw error;
   }
