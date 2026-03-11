@@ -33,7 +33,9 @@ const createNotify = async (data) => {
     const result = await db
       .collection(NOTIFICATION_COLLECTION_NAME)
       .insertOne(insertData);
-    return result;
+    return await db
+      .collection(NOTIFICATION_COLLECTION_NAME)
+      .findOne({ _id: result.insertedId });
   } catch (error) {
     throw error;
   }

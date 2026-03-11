@@ -14,6 +14,7 @@ const recordVisit = async () => {
         { $inc: { views: 1 } },
         { upsert: true, returnDocument: "after" },
       );
+    return result;
   } catch (error) {
     throw error;
   }

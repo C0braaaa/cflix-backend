@@ -12,12 +12,18 @@ const addComment = async (req, res) => {
     }
 
     if (req.body.parent_id) {
-      notificationServices.createReplyNotify(
+      const newNotify = await notificationServices.createReplyNotify(
         req.user,
         req.body.parent_id,
         req.body.content,
         req.body.movie_slug,
       );
+      if (newNotify && io) {
+        io.to(newNotify.receiver_id.toString()).emit(
+          "new_notification",
+          newNotify,
+        );
+      }
     }
     res.status(StatusCodes.OK).json({
       status: true,
@@ -61,11 +67,18 @@ const toggleVoteComment = async (req, res) => {
     );
 
     if (type === "like") {
-      notificationServices.createLikeNotify(
+      const newNotify = await notificationServices.createLikeNotify(
         req.user,
         id,
         updatedComment.movie_slug,
       );
+      const io = req.app.get("socketio");
+      if (newNotify && io) {
+        io.to(newNotify.receiver_id.toString()).emit(
+          "new_notification",
+          newNotify,
+        );
+      }
     }
     res.status(StatusCodes.OK).json({
       status: true,
