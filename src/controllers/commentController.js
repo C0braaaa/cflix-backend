@@ -4,19 +4,21 @@ import { StatusCodes } from "http-status-codes";
 
 const addComment = async (req, res) => {
   try {
-    const newComment = await commentServices.addComment(req.body);
+    const { reply_to_id, ...commentData } = req.body;
+
+    const newComment = await commentServices.addComment(commentData);
     const io = req.app.get("socketio");
 
     if (io) {
-      io.to(req.body.movie_slug).emit("receive_comment", newComment);
+      io.to(commentData.movie_slug).emit("receive_comment", newComment);
     }
 
-    if (req.body.parent_id) {
+    if (reply_to_id) {
       const newNotify = await notificationServices.createReplyNotify(
         req.user,
-        req.body.parent_id,
-        req.body.content,
-        req.body.movie_slug,
+        reply_to_id,
+        commentData.content,
+        commentData.movie_slug,
       );
       if (newNotify && io) {
         io.to(newNotify.receiver_id.toString()).emit(
@@ -60,13 +62,17 @@ const toggleVoteComment = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
     const { type } = req.body;
+
+    const commentBefore = await commentServices.getCommentById(id);
+    const wasLiked = commentBefore?.likes?.includes(userId.toString());
+
     const updatedComment = await commentServices.toggleVoteComment(
       id,
       userId,
       type,
     );
 
-    if (type === "like") {
+    if (type === "like" && !wasLiked) {
       const newNotify = await notificationServices.createLikeNotify(
         req.user,
         id,
@@ -80,6 +86,7 @@ const toggleVoteComment = async (req, res) => {
         );
       }
     }
+
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Vote comment successfully",

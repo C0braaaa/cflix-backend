@@ -39,4 +39,5 @@ export const commentServices = {
   getCommentBySlug,
   toggleVoteComment,
   deleteComment,
+  getCommentById: commentModel.getCommentById,
 };
