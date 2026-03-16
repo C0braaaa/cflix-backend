@@ -227,6 +227,12 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
     const result = await userServices.deleteUser(id);
+
+    const io = req.app.get("socketio");
+    if (io) {
+      io.to(id.toString()).emit("account_deleted");
+    }
+
     res.status(StatusCodes.OK).json({
       status: true,
       msg: "Xóa người dùng thành công",
