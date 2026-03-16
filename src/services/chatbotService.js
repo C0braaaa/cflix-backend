@@ -16,13 +16,13 @@ const tools = [
     function: {
       name: "search_kkphim",
       description:
-        "CHỈ dùng khi người dùng hỏi TÊN CỤ THỂ của một bộ phim (VD: 'Tìm phim Avengers', 'phim Người Nhện', 'phim Inception'). KHÔNG dùng cho các câu hỏi chung chung như 'phim hay', 'gợi ý phim', 'phim nào xem được'.",
+        "Dùng khi người dùng đề cập đến MỘT TÊN PHIM CỤ THỂ trong câu hỏi, dù hỏi theo cách nào: 'tìm phim X', 'có phim X không', 'phim X hay không', 'cho xem phim X', 'X có trên đây không'... Chỉ cần có tên phim hoặc một từ khóa nào đó là dùng tool này.",
       parameters: {
         type: "object",
         properties: {
           keyword: {
             type: "string",
-            description: "Tên cụ thể của bộ phim cần tìm.",
+            description: "Tên phim được nhắc đến trong câu hỏi.",
           },
         },
         required: ["keyword"],
@@ -34,7 +34,7 @@ const tools = [
     function: {
       name: "get_top_viewed_movies",
       description:
-        "CHỈ dùng khi người dùng hỏi rõ ràng về: top phim, phim xem nhiều nhất, phim hot, phim trending, phim thịnh hành trên CFlix. KHÔNG dùng cho các câu hỏi gợi ý phim thông thường.",
+        "Dùng khi người dùng hỏi về top phim, phim hot, phim trending, phim xem nhiều nhất trên CFlix. KHÔNG dùng khi đã có tên phim cụ thể.",
       parameters: { type: "object", properties: {} },
     },
   },
@@ -103,13 +103,20 @@ NGUYÊN TẮC HOẠT ĐỘNG:
 3. NỘI DUNG THÔ TỤC: Tuyệt đối không trả lời các câu hỏi thô tục, khiếm nhã hoặc không phù hợp.
 
 SỬ DỤNG CÔNG CỤ:
-4. TÌM TÊN PHIM: Dùng 'search_kkphim' CHỈ KHI người dùng hỏi TÊN CỤ THỂ của một bộ phim.
+4. TÌM TÊN PHIM: Dùng 'search_kkphim' khi người dùng đề cập tên phim CỤ THỂ hoặc hỏi kiểu:
+   'có phim X không', 'tìm phim X', 'cho xem X', 'X có trên đây không', 'phim X hay không'.
+   Trích xuất tên phim từ câu hỏi rồi dùng làm keyword.
+   KHÔNG dùng khi câu hỏi không có tên phim cụ thể.
 5. PHIM HOT / TOP VIEW: Dùng 'get_top_viewed_movies' CHỈ KHI người dùng hỏi top phim, phim xem nhiều nhất, phim hot/trending trên CFlix.
-6. FORMAT KẾT QUẢ TỪ TOOL: Mọi danh sách phim lấy từ Tool đều PHẢI trả về kèm link Markdown: [Tên Phim](/phim/slug-phim).
+6. FORMAT KẾT QUẢ TỪ TOOL: Khi có kết quả từ Tool, PHẢI format đúng như sau:
+   - Link Markdown: [Tên Phim](/phim/slug) — trong đó "Tên Phim" là tên thật của bộ phim, KHÔNG được thay bằng "xem ngay", "xem phim", hay bất kỳ chữ nào khác.
+   - Ví dụ ĐÚNG: [Batman Ninja](/phim/batman-ninja)
+   - Ví dụ SAI: [xem ngay](/phim/batman-ninja)
 
 TRẢ LỜI TỰ DO (không dùng Tool):
-7. Các câu hỏi chung về phim (gợi ý phim hay, phim theo thể loại, theo quốc gia, thông tin diễn viên,...) thì trả lời bằng kiến thức của bạn. KHÔNG tự tạo link Markdown, chỉ liệt kê tên phim thôi.
-8. Luôn nhiệt tình, thân thiện và xưng là Jarvis của CFlix.`;
+7. Các câu hỏi chung về phim (gợi ý phim hay, phim theo thể loại,...) thì trả lời bằng kiến thức. 
+   TUYỆT ĐỐI KHÔNG tự tạo link Markdown dưới bất kỳ hình thức nào. 
+   Chỉ liệt kê tên phim thuần túy, không có [tên](/link).`;
 
   const cleanHistory = history.map((msg) => {
     const isBot =
@@ -128,7 +135,7 @@ TRẢ LỜI TỰ DO (không dùng Tool):
       messages: messages,
       tools: tools,
       tool_choice: "auto",
-      temperature: 0.7,
+      temperature: 0.1,
       max_tokens: 1024,
     });
 
@@ -136,6 +143,7 @@ TRẢ LỜI TỰ DO (không dùng Tool):
 
     // Không có tool call -> trả lời thẳng
     if (!responseMessage.tool_calls) {
+      console.log("📝 [NO TOOL] Response content:", responseMessage.content);
       return { role: "assistant", content: responseMessage.content };
     }
 
@@ -178,10 +186,18 @@ TRẢ LỜI TỰ DO (không dùng Tool):
     const finalResponse = await groq.chat.completions.create({
       model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: messages,
-      tools: tools,
-      tool_choice: "none",
-      temperature: 0.7,
+      // tools: tools,
+      // tool_choice: "none",
+      temperature: 0.1,
     });
+    console.log(
+      "🔧 [TOOL RESPONSE] Raw content:",
+      finalResponse.choices[0].message.content,
+    );
+    console.log(
+      "🔧 [TOOL RESPONSE] Has markdown links?",
+      /\[.*?\]\(.*?\)/.test(finalResponse.choices[0].message.content),
+    );
 
     return {
       role: "assistant",
