@@ -114,8 +114,9 @@ const updateUserByID = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const requesterId = req.user._id;
 
-    const updatedUser = await userServices.update(id, data);
+    const updatedUser = await userServices.update(id, data, requesterId);
 
     if (!updatedUser) {
       return res.status(StatusCodes.NOT_FOUND).json({

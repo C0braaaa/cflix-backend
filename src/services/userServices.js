@@ -3,8 +3,21 @@ import { StatusCodes } from "http-status-codes";
 import { interactionModel } from "~/models/interactionsModel";
 
 //update profile
-const update = async (userId, regBody) => {
+const update = async (userId, regBody, requesterId = null) => {
   try {
+    if (requesterId && requesterId.toString() !== userId.toString()) {
+      const targetUser = await userModels.findOneById(userId);
+      if (!targetUser) {
+        throw { code: StatusCodes.NOT_FOUND, message: "User not found" };
+      }
+      if (targetUser.role === "admin") {
+        throw {
+          code: StatusCodes.FORBIDDEN,
+          message: "Không thể chỉnh sửa hoặc khóa tài khoản admin khác!",
+        };
+      }
+    }
+
     const updateData = {
       username: regBody.username,
       gender: regBody.gender,
