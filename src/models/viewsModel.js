@@ -105,8 +105,32 @@ const getTopViewed = async (type) => {
   }
 };
 
+const getViewsBySlug = async (slug) => {
+  try {
+    const db = await GET_DB();
+    const res = await db.collection(VIEWS_COLLECTION_NAME).findOne(
+      { slug: slug },
+      {
+        projection: {
+          _id: 0,
+          slug: 1,
+          name: 1,
+          origin_name: 1,
+          poster_url: 1,
+          type: 1,
+          views: 1,
+        },
+      },
+    );
+    return res ? res.views : 0;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const viewsModel = {
   VIEWS_COLLECTION_SCHEMA,
   increaseView,
   getTopViewed,
+  getViewsBySlug,
 };

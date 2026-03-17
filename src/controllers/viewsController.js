@@ -47,7 +47,24 @@ const getTopViewed = async (req, res) => {
   }
 };
 
+const getViewsBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const views = await viewsServices.getViewsBySlug(slug);
+    res.status(StatusCodes.OK).json({
+      status: true,
+      message: "Lấy lượt xem thành công!",
+      data: { slug, views },
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message,
+    });
+  }
+};
+
 export const viewsController = {
   increaseView,
   getTopViewed,
+  getViewsBySlug,
 };

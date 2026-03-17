@@ -18,7 +18,17 @@ const getTopViewed = async (type) => {
   }
 };
 
+const getViewsBySlug = async (slug) => {
+  try {
+    const res = await viewsModel.getViewsBySlug(slug);
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const viewsServices = {
   increaseView,
   getTopViewed,
+  getViewsBySlug,
 };
