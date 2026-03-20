@@ -4,8 +4,6 @@ import { StatusCodes } from "http-status-codes";
 const recordVisit = async (req, res, next) => {
   try {
     await trafficService.recordVisit();
-
-    // API này gọi ngầm nên chỉ cần trả về OK là được
     res.status(StatusCodes.OK).json({
       status: true,
       message: "Ghi nhận truy cập thành công!",
@@ -24,8 +22,8 @@ const getTrafficStats = async (req, res, next) => {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+    const todayStr = today.toISOString().slice(0, 10);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
     const chartData = result.stats.map((item) => {
       let displayDate = "";
@@ -37,19 +35,18 @@ const getTrafficStats = async (req, res, next) => {
         const [year, month, day] = item.date.split("-");
         displayDate = `${day}/${month}`;
       }
-
-      return {
-        date: displayDate,
-        views: item.views,
-      };
+      return { date: displayDate, views: item.views };
     });
 
     res.status(StatusCodes.OK).json({
       status: true,
       message: "Lấy thống kê truy cập thành công!",
       data: {
-        chartData: chartData,
+        chartData,
         trafficHighestInDay: result.trafficHighestInDay,
+        totalViews: result.totalViews,
+        previousViews: result.previousViews,
+        growthRate: result.growthRate,
       },
     });
   } catch (error) {

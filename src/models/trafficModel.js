@@ -20,14 +20,24 @@ const recordVisit = async () => {
   }
 };
 
+// Helper: tính date string offset N ngày từ hôm nay
+const getDateStr = (offsetDays = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() - offsetDays);
+  return d.toISOString().slice(0, 10);
+};
+
 const getTrafficStats = async (limit = 7) => {
   try {
     const db = await GET_DB();
 
-    const [stats, highestTraffic] = await Promise.all([
+    const startA = getDateStr(limit);
+    const startB = getDateStr(limit * 2);
+
+    const [stats, highestTraffic, previousResult] = await Promise.all([
       db
         .collection(TRAFFIC_COLLECTION_NAME)
-        .find({})
+        .find({ date: { $gte: startA } })
         .sort({ date: -1 })
         .limit(limit)
         .toArray(),
@@ -38,11 +48,32 @@ const getTrafficStats = async (limit = 7) => {
         .sort({ views: -1 })
         .limit(1)
         .toArray(),
+
+      db
+        .collection(TRAFFIC_COLLECTION_NAME)
+        .aggregate([
+          { $match: { date: { $gte: startB, $lt: startA } } },
+          { $group: { _id: null, total: { $sum: "$views" } } },
+        ])
+        .toArray(),
     ]);
+
+    const totalViews = stats.reduce((sum, item) => sum + item.views, 0);
+    const previousViews = previousResult[0]?.total || 0;
+
+    const growthRate =
+      previousViews > 0
+        ? parseFloat(
+            (((totalViews - previousViews) / previousViews) * 100).toFixed(1),
+          )
+        : null;
 
     return {
       stats: stats.reverse(),
-      trafficHighestInDay: highestTraffic.length > 0 ? highestTraffic[0] : null,
+      trafficHighestInDay: highestTraffic[0] ?? null,
+      totalViews,
+      previousViews,
+      growthRate,
     };
   } catch (error) {
     throw error;
