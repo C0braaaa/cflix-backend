@@ -88,9 +88,9 @@ Router.get(
   userController.getProgress,
 );
 
-Router.get(
-  "/recommendations",
-  authMiddleware.verifyToken,
-  userController.getRecommendations,
-);
+// Router.get(
+//   "/recommendations",
+//   authMiddleware.verifyToken,
+//   userController.getRecommendations,
+// );
 export const userRoute = Router;
