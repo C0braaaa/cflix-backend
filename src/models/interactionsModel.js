@@ -58,11 +58,12 @@ const findInteraction = async (userId, slug, type) => {
 // 4. Lưu tiến độ (Dùng riêng cho Continue Watching - Upsert)
 const saveProgress = async (data) => {
   const db = await GET_DB();
+  const { createdAt, ...updateFields } = data;
   // Data cần có: user_id, slug, type='continue_watching'
   return await db.collection(INTERACTION_COLLECTION_NAME).updateOne(
     { user_id: data.user_id, slug: data.slug, type: "continue_watching" },
     {
-      $set: { ...data, updatedAt: Date.now() },
+      $set: { ...updateFields, updatedAt: Date.now() },
       $setOnInsert: { createdAt: Date.now() },
     },
     { upsert: true },
