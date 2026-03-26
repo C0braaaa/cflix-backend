@@ -51,7 +51,7 @@ const update = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -87,7 +87,7 @@ const getAllUSers = async (req, res) => {
       totalPages: totalPages,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -138,7 +138,7 @@ const updateUserByID = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -161,7 +161,7 @@ const toggleFavorite = async (req, res) => {
       result: result,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -183,7 +183,7 @@ const togglePlaylist = async (req, res) => {
       result: result,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -201,7 +201,7 @@ const saveProgress = async (req, res) => {
       msg: "Lưu tiến trình thành công",
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -218,7 +218,7 @@ const removeContinueWatching = async (req, res) => {
       msg: "Đã xóa khỏi tiếp tục xem",
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -241,7 +241,7 @@ const deleteUser = async (req, res) => {
       result: result,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -264,7 +264,7 @@ const getFavorites = async (req, res) => {
       // totalPages: result.totalPages,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -286,7 +286,7 @@ const getPlaylist = async (req, res) => {
       // totalItems: result.totalItems,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -311,7 +311,7 @@ const getContinueWatching = async (req, res) => {
       // totalItems: result.totalItems,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }

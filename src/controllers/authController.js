@@ -19,7 +19,7 @@ const login = async (req, res) => {
       user: result.data,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -45,7 +45,7 @@ const loginGoogle = async (req, res) => {
       user: result.data,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -75,7 +75,7 @@ const register = async (req, res) => {
       user: createNewUser,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -98,14 +98,8 @@ const forgotPassword = async (req, res) => {
       msg: result.message,
     });
   } catch (error) {
-    const customCode =
-      typeof error.code === "number"
-        ? error.code
-        : StatusCodes.INTERNAL_SERVER_ERROR;
-
-    res.status(customCode).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
-      code: error.code, // Trả về mã lỗi gốc để bạn biết đường debug (ví dụ: EAUTH, EENVELOPE)
     });
   }
 };
@@ -127,11 +121,7 @@ const resetPassword = async (req, res) => {
       msg: result.message,
     });
   } catch (error) {
-    const customCode =
-      typeof error.code === "number"
-        ? error.code
-        : StatusCodes.INTERNAL_SERVER_ERROR;
-    res.status(customCode).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -152,8 +142,9 @@ const verifyTokenResetPass = async (req, res) => {
       msg: "Token hợp lê!",
     });
   } catch (error) {
-    const customCode = typeof error.code === "number" ? error.code : 500;
-    res.status(customCode).json({ message: error.message, code: error.code });
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
   }
 };
 
@@ -180,12 +171,8 @@ const changePassword = async (req, res) => {
       msg: result.message,
     });
   } catch (error) {
-    const customCode =
-      typeof error.code === "number"
-        ? error.code
-        : StatusCodes.INTERNAL_SERVER_ERROR;
-    res.status(customCode).json({
-      message: error.message || "Lỗi Server khi đổi mật khẩu",
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
     });
   }
 };

@@ -13,7 +13,7 @@ const getMyNotifications = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
@@ -52,7 +52,7 @@ const deleteNotify = async (req, res) => {
 
     res.status(StatusCodes.OK).json({ message: "Xóa thông báo thành công!" });
   } catch (error) {
-    res.status(error.code || StatusCodes.INTERNAL_SERVER_ERROR).json({
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Internal Server Error",
     });
   }
