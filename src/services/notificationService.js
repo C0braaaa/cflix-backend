@@ -23,7 +23,7 @@ const createReplyNotify = async (
         replyContent.length > 50
           ? replyContent.slice(0, 50) + "..."
           : replyContent,
-      target_url: `/phim/${movieSlug}`,
+      target_url: `/phim/${movieSlug}#comment-${targetCommentId}`,
       image: currentUser.avatar_url,
     });
   } catch (error) {
@@ -50,7 +50,7 @@ const createLikeNotify = async (currentUser, targetCommentId, movieSlug) => {
         messageContent.length > 50
           ? messageContent.slice(0, 50) + "..."
           : messageContent,
-      target_url: `/phim/${movieSlug}`,
+      target_url: `/phim/${movieSlug}#comment-${targetCommentId}`,
       image: currentUser.avatar_url,
     });
   } catch (error) {
