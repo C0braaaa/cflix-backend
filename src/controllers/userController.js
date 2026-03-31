@@ -62,7 +62,7 @@ const getAllUSers = async (req, res) => {
   try {
     const { keyword, role, is_active, page, limit } = req.query;
 
-    // const currentId = req.user._id;
+    const currentId = req.user._id;
 
     const result = await userServices.getAllUSers({
       keyword,
@@ -70,6 +70,7 @@ const getAllUSers = async (req, res) => {
       is_active,
       page,
       limit,
+      currentId,
     });
 
     const pageNum = parseInt(page) || 1;

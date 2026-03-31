@@ -84,11 +84,17 @@ const getAllUsers = async ({
   is_active,
   page = 1,
   limit = 10,
+  currentId,
 }) => {
   try {
     const query = {
       _destroy: false,
     };
+
+    // Exclude the currently logged-in admin
+    if (currentId) {
+      query._id = { $ne: new ObjectId(currentId) };
+    }
 
     if (keyword) {
       const regex = { $regex: keyword, $options: "i" };
