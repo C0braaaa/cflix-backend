@@ -6,39 +6,35 @@ const BLOCKED_MOVIE_COLLECTION_NAME = "blocked_movies";
 const BLOCKED_MOVIE_SCHEMA = Joi.object({
   slug: Joi.string().required().trim().strict(),
   name: Joi.string().required().trim().strict(),
+  origin_name: Joi.string().required().trim().strict(),
+  poster_url: Joi.string().allow("").default(""),
   isBlocked: Joi.boolean().default(true),
-  reason: Joi.string()
-    .valid("inappropriate", "report", "copyright", "other")
-    .default("other"),
-  blockedBy: Joi.string().required().trim().strict(),
-  blockedAt: Joi.date()
-    .timestamp("javascript")
-    .default(() => new Date()),
-  updatedAt: Joi.date()
+  type: Joi.string().required().trim().strict(),
+  update_at: Joi.date()
     .timestamp("javascript")
     .default(() => new Date()),
 });
 
-const blockMovie = async (slug, name, reason = "other", blockedBy) => {
+const blockMovie = async (slug, name, origin_name, type, poster_url) => {
   try {
     const db = await GET_DB();
+
+    const validData = await BLOCKED_MOVIE_SCHEMA.validateAsync({
+      slug,
+      name,
+      origin_name,
+      poster_url: poster_url || "",
+      type,
+      isBlocked: true,
+      update_at: new Date(),
+    });
 
     const result = await db
       .collection(BLOCKED_MOVIE_COLLECTION_NAME)
       .findOneAndUpdate(
         { slug },
         {
-          $set: {
-            slug,
-            name,
-            isBlocked: true,
-            reason,
-            blockedBy,
-            updatedAt: new Date(),
-          },
-          $setOnInsert: {
-            blockedAt: new Date(),
-          },
+          $set: validData,
         },
         { upsert: true, returnDocument: "after" },
       );
@@ -57,7 +53,7 @@ const unblockMovie = async (slug) => {
       .collection(BLOCKED_MOVIE_COLLECTION_NAME)
       .findOneAndUpdate(
         { slug },
-        { $set: { isBlocked: false, updatedAt: new Date() } },
+        { $set: { isBlocked: false, update_at: new Date() } },
         { returnDocument: "after" },
       );
 
@@ -90,7 +86,7 @@ const getAllBlocked = async (page = 1, limit = 10) => {
       db
         .collection(BLOCKED_MOVIE_COLLECTION_NAME)
         .find({ isBlocked: true })
-        .sort({ updatedAt: -1 })
+        .sort({ update_at: -1 })
         .skip(skip)
         .limit(limit)
         .toArray(),

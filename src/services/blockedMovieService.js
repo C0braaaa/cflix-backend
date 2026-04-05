@@ -1,7 +1,13 @@
 import { blockedMovieModel } from "~/models/blockedMovieModel";
 
-const blockMovie = async (slug, name, reason, blockedBy) => {
-  return await blockedMovieModel.blockMovie(slug, name, reason, blockedBy);
+const blockMovie = async (slug, name, origin_name, type, poster_url) => {
+  return await blockedMovieModel.blockMovie(
+    slug,
+    name,
+    origin_name,
+    type,
+    poster_url,
+  );
 };
 
 const unblockMovie = async (slug) => {
