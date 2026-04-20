@@ -386,14 +386,91 @@ const callMoviesByCountryAPI = async (
 
 // ===================== FALLBACK =====================
 const chatWithoutTools = async (messages) => {
-  const fallbackMessages = messages.filter((m) => m.role !== "tool");
+  const fallbackMessages = messages
+    .filter((m) => m.role !== "tool")
+    .map((m) => {
+      // Inject thêm cảnh báo vào system message của fallback
+      if (m.role === "system") {
+        return {
+          ...m,
+          content:
+            m.content +
+            "\n\nCHÚ Ý ĐẶC BIỆT (QUAN TRỌNG NHẤT): TUYỆT ĐỐI KHÔNG tạo ra bất kỳ đường link Markdown nào dạng [text](url) trong phản hồi này. Chỉ được liệt kê tên phim thuần túy, không có link đi kèm.",
+        };
+      }
+      return m;
+    });
   const response = await groq.chat.completions.create({
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
     messages: fallbackMessages,
-    temperature: 0.7,
+    temperature: 0.2,
     max_tokens: 1024,
   });
   return stripFakeMarkdownLinks(response.choices[0].message.content);
+};
+
+// ===================== ENRICH WITH REAL LINKS =====================
+// Khi AI trả lời bằng kiến thức (no tool), ta extract tên phim → search song song → append link thật
+const enrichResponseWithLinks = async (content) => {
+  try {
+    // Bước 1: Truncate content trước khi gửi cho AI (tiết kiệm token, giảm latency)
+    const truncated = content.slice(0, 800);
+
+    const extractResponse = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: [
+        {
+          role: "user",
+          content: `Liệt kê tất cả tên phim được đề cập trong đoạn văn sau. Chỉ trả về JSON array thuần túy, không có markdown, không giải thích. Ví dụ: ["Inception", "The Dark Knight"]\n\n"${truncated}"`,
+        },
+      ],
+      temperature: 0,
+      max_tokens: 150,
+    });
+
+    const rawText = extractResponse.choices[0].message.content.trim();
+    const match = rawText.match(/\[[\s\S]*?\]/);
+    if (!match) return stripFakeMarkdownLinks(content);
+
+    let movieNames;
+    try {
+      movieNames = JSON.parse(match[0]);
+    } catch {
+      return stripFakeMarkdownLinks(content);
+    }
+
+    if (!Array.isArray(movieNames) || movieNames.length === 0)
+      return stripFakeMarkdownLinks(content);
+
+    // Deduplicate + giới hạn 5 phim
+    const uniqueNames = [...new Set(movieNames)].slice(0, 5);
+    console.log("[Enrich] Tên phim extracted:", uniqueNames);
+
+    // Bước 2: Search TẤT CẢ song song (Promise.all thay vì for...of tuần tự)
+    const searchResults = await Promise.all(
+      uniqueNames.map((name) => callKKPhimAPI(name)),
+    );
+
+    const foundLinks = searchResults
+      .map((result, i) => {
+        if (result.movies && result.movies.length > 0) {
+          const best = result.movies[0];
+          console.log(`[Enrich] Tìm thấy: ${best.name} → /phim/${best.slug}`);
+          return `[${best.name}](/phim/${best.slug})`;
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    const strippedContent = stripFakeMarkdownLinks(content);
+    if (foundLinks.length === 0) return strippedContent;
+
+    // Bước 3: Append section "Xem trên CFlix" với link thật
+    return `${strippedContent}\n\n🎬 **Xem trên CFlix:** ${foundLinks.join(", ")}`;
+  } catch (e) {
+    console.error("[Enrich] Lỗi:", e);
+    return stripFakeMarkdownLinks(content);
+  }
 };
 
 // ===================== MAIN =====================
@@ -437,8 +514,12 @@ SỬ DỤNG CÔNG CỤ:
    - Trình bày danh sách phim: Liệt kê các link markdown của phim liên tiếp nhau, ngăn cách bằng dấu phẩy. KHÔNG DÙNG gạch đầu dòng cho mỗi phim.
 
 TRẢ LỜI TỰ DO (không dùng Tool):
-9. Các câu hỏi chung về phim thì trả lời bằng kiến thức.
-   TUYỆT ĐỐI KHÔNG tự tạo link Markdown. Chỉ liệt kê tên phim thuần túy.`;
+9. CÁC TRƯỜNG HỢP SAU ĐÂY TUYỆT ĐỐI KHÔNG ĐƯỢC GỌI TOOL, chỉ trả lời bằng kiến thức:
+   - Câu hỏi về chủ đề phim ảnh chung: "phim về du hành thời gian", "phim có cú lật kèo", "phim chữa lành", "phim kinh điển nhất mọi thời đại"...
+   - Câu hỏi về diễn viên, đạo diễn: "Christopher Nolan đạo diễn phim gì", "Leonardo DiCaprio nổi tiếng với phim nào"...
+   - Câu hỏi kiến thức điện ảnh: "Phim Titanic giành bao nhiêu Oscar", "Avatar là phim gì"...
+   - Câu gợi ý theo cảm xúc/tình huống: "Gợi ý phim buổi tối xem cùng gia đình", "Phim nào hợp cho ngày mưa"...
+   ⚠️ Với những câu trên: KHÔNG dùng tool. Chỉ LIỆT KÊ TÊN PHIM THUẦN TÚY (không có link, không có dấu ngoặc, không có URL).`;
 
   const cleanHistory = history.map((msg) => {
     const isBot =
@@ -465,7 +546,11 @@ TRẢ LỜI TỰ DO (không dùng Tool):
 
     if (!responseMessage.tool_calls) {
       console.log("📝 [NO TOOL] Response content:", responseMessage.content);
-      return { role: "assistant", content: responseMessage.content };
+      // Enrich: tìm phim được đề cập và append link thật vào cuối response
+      const enrichedContent = await enrichResponseWithLinks(
+        responseMessage.content,
+      );
+      return { role: "assistant", content: enrichedContent };
     }
 
     messages.push(responseMessage);
@@ -520,19 +605,19 @@ TRẢ LỜI TỰ DO (không dùng Tool):
       temperature: 0.1,
     });
 
-    console.log(
-      "🔧 [TOOL RESPONSE] Raw content:",
-      finalResponse.choices[0].message.content,
-    );
+    const rawToolContent = finalResponse.choices[0].message.content;
+    console.log("🔧 [TOOL RESPONSE] Raw content:", rawToolContent);
     console.log(
       "🔧 [TOOL RESPONSE] Has markdown links?",
-      /\[.*?\]\(.*?\)/.test(finalResponse.choices[0].message.content),
+      /\[.*?\]\(.*?\)/.test(rawToolContent),
     );
 
-    return {
-      role: "assistant",
-      content: finalResponse.choices[0].message.content,
-    };
+    // QUAN TRỌNG: Luôn đi qua enrichResponseWithLinks để strip slug bịa
+    // và build lại link thật từ API — tránh model tự hallucinate slug
+    const enrichedToolContent = await enrichResponseWithLinks(rawToolContent);
+    console.log("✅ [TOOL RESPONSE] Enriched content:", enrichedToolContent);
+
+    return { role: "assistant", content: enrichedToolContent };
   } catch (error) {
     if (
       error?.error?.error?.code === "tool_use_failed" ||
@@ -540,8 +625,9 @@ TRẢ LỜI TỰ DO (không dùng Tool):
     ) {
       console.warn("[Groq AI] tool_use_failed, fallback không dùng tool...");
       try {
-        const fallbackContent = await chatWithoutTools(messages);
-        return { role: "assistant", content: fallbackContent };
+        const rawFallback = await chatWithoutTools(messages);
+        const enrichedFallback = await enrichResponseWithLinks(rawFallback);
+        return { role: "assistant", content: enrichedFallback };
       } catch (fallbackError) {
         console.error("Lỗi fallback Chatbot:", fallbackError);
       }
