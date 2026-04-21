@@ -410,10 +410,36 @@ const chatWithoutTools = async (messages) => {
 };
 
 // ===================== ENRICH WITH REAL LINKS =====================
-// Khi AI trả lời bằng kiến thức (no tool), ta extract tên phim → search song song → append link thật
 const enrichResponseWithLinks = async (content) => {
   try {
-    // Bước 1: Truncate content trước khi gửi cho AI (tiết kiệm token, giảm latency)
+    // 1. Phân tích tất cả các markdown links CÓ SẴN (thường do Tool tạo ra)
+    const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+    const matches = [...content.matchAll(regex)];
+
+    // NẾU AI ĐÃ TẠO SẴN LINK INLINE: Thay thế trực tiếp inline để tránh bị lặp lại output
+    if (matches.length > 0) {
+      const uniqueNames = [...new Set(matches.map((m) => m[1]))];
+      const searchResults = await Promise.all(
+        uniqueNames.map((name) => callKKPhimAPI(name)),
+      );
+
+      let finalContent = content;
+      uniqueNames.forEach((name, i) => {
+        if (searchResults[i].movies && searchResults[i].movies.length > 0) {
+          const best = searchResults[i].movies[0];
+          // Replace tất cả markdown ảo của phim này thành mardown chuẩn với slug thật
+          const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const movieRegex = new RegExp(`\\[${escapeRegex(name)}\\]\\([^)]+\\)`, 'g');
+          finalContent = finalContent.replace(
+            movieRegex,
+            `[${best.name}](/phim/${best.slug})`,
+          );
+        }
+      });
+      return finalContent;
+    }
+
+    // 2. NẾU KHÔNG CÓ MARKDOWN LINK: Dùng LLM bóc tách tên phim -> Append thẻ xem
     const truncated = content.slice(0, 800);
 
     const extractResponse = await groq.chat.completions.create({
@@ -442,11 +468,9 @@ const enrichResponseWithLinks = async (content) => {
     if (!Array.isArray(movieNames) || movieNames.length === 0)
       return stripFakeMarkdownLinks(content);
 
-    // Deduplicate + giới hạn 5 phim
     const uniqueNames = [...new Set(movieNames)].slice(0, 5);
     console.log("[Enrich] Tên phim extracted:", uniqueNames);
 
-    // Bước 2: Search TẤT CẢ song song (Promise.all thay vì for...of tuần tự)
     const searchResults = await Promise.all(
       uniqueNames.map((name) => callKKPhimAPI(name)),
     );
@@ -455,7 +479,6 @@ const enrichResponseWithLinks = async (content) => {
       .map((result, i) => {
         if (result.movies && result.movies.length > 0) {
           const best = result.movies[0];
-          console.log(`[Enrich] Tìm thấy: ${best.name} → /phim/${best.slug}`);
           return `[${best.name}](/phim/${best.slug})`;
         }
         return null;
@@ -465,7 +488,6 @@ const enrichResponseWithLinks = async (content) => {
     const strippedContent = stripFakeMarkdownLinks(content);
     if (foundLinks.length === 0) return strippedContent;
 
-    // Bước 3: Append section "Xem trên CFlix" với link thật
     return `${strippedContent}\n\n🎬 **Xem trên CFlix:** ${foundLinks.join(", ")}`;
   } catch (e) {
     console.error("[Enrich] Lỗi:", e);

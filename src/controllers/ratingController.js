@@ -4,8 +4,8 @@ import { StatusCodes } from "http-status-codes";
 const toggleLike = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { slug } = req.body;
-    const result = await ratingServices.toggleLike(slug, userId);
+    const { slug, name, poster_url } = req.body;
+    const result = await ratingServices.toggleLike(slug, userId, name, poster_url);
     res.status(StatusCodes.OK).json({
       status: true,
       msg: result.msg,
@@ -21,8 +21,8 @@ const toggleLike = async (req, res) => {
 const toggleDislike = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { slug } = req.body;
-    const result = await ratingServices.toggleDislike(slug, userId);
+    const { slug, name, poster_url } = req.body;
+    const result = await ratingServices.toggleDislike(slug, userId, name, poster_url);
     res.status(StatusCodes.OK).json({
       status: true,
       msg: result.msg,
@@ -53,8 +53,24 @@ const getRating = async (req, res) => {
   }
 };
 
+const getTopLiked = async (req, res) => {
+  try {
+    const result = await ratingServices.getTopLiked();
+    res.status(StatusCodes.OK).json({
+      status: true,
+      msg: "Get top liked successfully",
+      data: result,
+    });
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
+
 export const ratingController = {
   toggleLike,
   toggleDislike,
   getRating,
+  getTopLiked,
 };

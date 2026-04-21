@@ -9,6 +9,7 @@ Router.post(
   authMiddleware.verifyToken,
   ratingController.toggleDislike,
 );
+Router.get("/top-liked", ratingController.getTopLiked);
 Router.get(
   "/:slug",
   authMiddleware.checkTokenOptional,
