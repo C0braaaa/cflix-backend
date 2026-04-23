@@ -1,124 +1,149 @@
 <div align="center">
-  <img src="https://nodejs.org/static/images/logo.svg" alt="Node.js Logo" width="200" />
-  <h1>CFLIX Backend API</h1>
+  <img src="https://nodejs.org/static/images/logo.svg" alt="Node.js Logo" width="180" />
+  <h1>🚀 CFLIX Core Services (Backend API)</h1>
 
-  <p>
-    A scalable Node.js/Express REST API powering a video‑streaming service with user
-    management, playlists, ratings, comments, real-time notifications and AI integration.
+  <p align="center">
+    <strong>A highly scalable, real-time Node.js/Express REST API powering the CFLIX streaming ecosystem.</strong>
   </p>
 
-  <div>
-    <img src="https://img.shields.io/badge/node-%3E%3D18.0.0-45a248?logo=nodedotjs&logoColor=white" alt="Node.js" />
-    <img src="https://img.shields.io/badge/express-4.x-lightgrey?logo=express&logoColor=black" alt="Express" />
-    <img src="https://img.shields.io/badge/mongodb-7.x-47A248?logo=mongodb&logoColor=white" alt="MongoDB" />
-    <img src="https://img.shields.io/badge/socket.io-4.x-010101?logo=socket.io&logoColor=white" alt="Socket.io" />
-    <img src="https://img.shields.io/badge/babel-7.x-F9DC3E?logo=babel&logoColor=black" alt="Babel" />
-  </div>
+  <p align="center">
+    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Node.js-18.x-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" /></a>
+    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Express.js-4.x-404D59?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
+    <a href="#-tech-stack"><img src="https://img.shields.io/badge/MongoDB-7.x-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" /></a>
+    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Socket.io-4.x-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.io" /></a>
+    <a href="#-tech-stack"><img src="https://img.shields.io/badge/JWT-Secure-black?style=for-the-badge&logo=JSON%20web%20tokens" alt="JWT" /></a>
+  </p>
 </div>
+
+<br />
+
+## 📖 System Overview
+
+Welcome to the **CFLIX Backend Architecture**. This repository serves as the central nervous system for the CFLIX streaming platform. Engineered for high performance and scalability, this RESTful API handles everything from secure user authentication to complex data aggregations and real-time bidirectional communication.
+
+Our architecture is built on a modern **Node.js/Express** foundation, utilizing **MongoDB** for flexible data storage and **Socket.io** for real-time interactions, ensuring a seamless and engaging experience for users worldwide.
 
 ---
 
-## 📖 Introduction
+## ✨ Enterprise-Grade Features
 
-This repository contains the **backend** services of the **CFLIX** project – a RESTful API designed for a movie/entertainment platform. 
+*   **🔐 Robust Security & Auth Engine:**
+    *   State-of-the-art JWT (JSON Web Token) authentication strategy.
+    *   Secure password hashing utilizing `bcryptjs`.
+    *   Seamless Single Sign-On (SSO) via **Google OAuth 2.0**.
+    *   Rate limiting and advanced CORS protection to prevent DDoS and XSS attacks.
+*   **📡 Real-Time Communication Hub:**
+    *   Powered by `Socket.io` for instantaneous data delivery.
+    *   Live commenting systems with typing indicators.
+    *   Instant push notifications for user interactions and system alerts.
+*   **🧠 AI-Powered Insights:**
+    *   Deep integration with **Google Gemini** & **Groq SDKs**.
+    *   Intelligent chatbot for personalized movie recommendations and user support.
+*   **🏗️ Advanced Data Management:**
+    *   Complex MongoDB aggregations for content ranking and analytics.
+    *   Comprehensive user profiles: watch history tracking, custom playlists, and unified favorites management.
+    *   Hierarchical/Nestable comment threads with granular rating systems (likes/dislikes).
 
-It handles core logics ranging from authentication, user behavior tracking (favorites, history), community interactions (comments, ratings), real‑time notifications via Socket.IO, to an integrated AI chatbot using Google Gemini. The codebase is written in modern ECMAScript, transpiled with Babel for robust compatibility, and targets Node.js 18+.
+---
 
-## ✨ Key Features
+## 🏗️ Architecture & Tech Stack
 
-- **🔐 Authentication**: Robust JWT-based auth, password hashing with `bcryptjs`, and Google OAuth integration.
-- **🙋‍♂️ User Management**: Profiles, watch history (continue watching), playlists, and favorites.
-- **💬 Social Interaction**: Nestable comments, rating systems (like/dislike), and content reporting.
-- **🔔 Realtime System**: Instant notifications and live comment updates powered by `socket.io`.
-- **🤖 AI Integration**: Integrated movie-recommendation chatbot using `Google Gemini` / `Groq` SDKs.
-- **🛡️ Security & Validation**: Data validation with `Joi`, rate limiting, and CORS configuration.
+| Category | Technology | Description |
+| :--- | :--- | :--- |
+| **Runtime Environment** | **Node.js (v18+)** | High-performance, event-driven JavaScript runtime. |
+| **Web Framework** | **Express.js** | Fast, unopinionated, minimalist web framework. |
+| **Database & ORM** | **MongoDB & Mongoose** | NoSQL database for flexible schema design and fast querying. |
+| **Real-Time Engine** | **Socket.IO** | Bi-directional communication between web clients and servers. |
+| **Data Validation** | **Joi** | Powerful schema description language and data validator. |
+| **Security Suite** | **JWT, bcryptjs, Helmet** | Comprehensive security mechanisms and encryption. |
+| **AI Integration** | **@google/generative-ai** | Generative AI models for enhanced user experiences. |
 
-## 🛠️ Tech Stack 
+---
 
-- **Runtime**: Node.js (≥18)
-- **Framework**: Express.js
-- **Database**: MongoDB (Official native driver)
-- **Real-time**: Socket.IO
-- **Validation**: Joi
-- **Security & Auth**: JWT, bcryptjs, google-auth-library, express-rate-limit
-- **Mailing**: Nodemailer
-- **AI Tooling**: @google/generative-ai, groq-sdk
-- **Build & Dev**: Babel (ESM support), Nodemon, ESLint
+## 📂 Codebase Anatomy
 
-## 📂 Project Structure
+We enforce a strict separation of concerns following the MVC (Model-View-Controller) architectural pattern adapted for API design:
 
 ```text
-src/
-├── config/              # Environment vars, database connections, CORS
-├── controllers/         # Request handlers grouped by feature domains
-├── middlewares/         # Auth verification, error handling, rate limits
-├── models/              # MongoDB schema and query layers
-├── routes/              # API Route definitions (v1)
-├── services/            # Core business logic
-├── sockets/             # Socket.IO event registrations and handlers
-├── utils/               # Helper utilities (Mailer, formatters)
-├── validations/         # Joi validation schemas
-└── server.js            # Express application entry point
+cflix-backend/
+├── src/
+│   ├── config/          # Environment configuration, DB connections & third-party setup
+│   ├── controllers/     # Application logic and request/response handling
+│   ├── middlewares/     # Custom pipeline steps (Auth, Error handling, Rate Limits)
+│   ├── models/          # MongoDB Mongoose schemas and data access layer
+│   ├── routes/          # RESTful API route definitions (v1)
+│   ├── services/        # Heavy lifting and core business logic
+│   ├── sockets/         # WebSocket event listeners and emitters
+│   ├── utils/           # Shared utilities (Nodemailer, token generators, formatters)
+│   ├── validations/     # Joi validation schemas for strict payload checking
+│   └── server.js        # Application bootstrap and entry point
+├── .env.example         # Template for environment variables
+└── package.json         # Dependency management and script definitions
 ```
 
-## 🚀 Getting Started
+---
 
-Follow these instructions to set up the backend on your local machine.
+## 🚀 Quick Start Guide
 
-### Prerequisites
+### 1. Prerequisites
 
-- **Node.js**: v18.0.0 or higher
-- **MongoDB**: A running local instance or MongoDB Atlas cluster
+Ensure your development environment meets the following requirements:
+*   **Node.js**: `v18.0.0` or higher
+*   **MongoDB**: Local instance running on port `27017` or a MongoDB Atlas URI.
+*   **Package Manager**: `npm`, `yarn`, or `pnpm`.
 
-### 1. Clone the repository
+### 2. Installation
+
+Clone the repository and install the necessary dependencies:
 
 ```bash
-git clone https://github.com/your-username/cflix-backend.git
+git clone https://github.com/C0braaaa/cflix-backend.git
 cd cflix-backend
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Setup Environment Variables
+### 3. Environment Configuration
 
-Duplicate the `.env.example` file (if available) or create a new `.env` file at the root:
+Copy the example environment file and configure your local variables:
+
+```bash
+cp .env.example .env
+```
+
+*Update `.env` with your specific credentials:*
 
 ```env
-# Application configs
+# Server Configuration
 APP_HOST=0.0.0.0
 APP_PORT=5001
 CLIENT_URL=http://localhost:5173
 
-# Database
-MONGODB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net
-DATABASE_NAME=cflix
+# Database Connection
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net
+DATABASE_NAME=cflix_production
 
-# Authentication
-JWT_SECRET=your_super_secret_jwt_key
-GOOGLE_CLIENT_ID=your_google_oauth_client_id
+# Security & Authentication
+JWT_SECRET=generate_a_strong_random_string_here
+GOOGLE_CLIENT_ID=your_google_cloud_oauth_client_id
 
-# Mailer (SMTP)
+# Mail Service (SMTP)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_app_password
 
-# AI Chatbot
+# Artificial Intelligence Integrations
 GEMINI_API_KEY=your_gemini_api_key
 ```
 
-### 4. Run the Server
+### 4. Launching the Server
 
-**Development Mode (Live Reload):**
+**For Local Development (with Hot Reload):**
 ```bash
 npm run dev
 ```
 
-**Production Build:**
+**For Production Deployment:**
 ```bash
 npm run build
 npm run production
@@ -126,41 +151,37 @@ npm run production
 
 ---
 
-## 🔌 API Endpoints Reference
+## 📡 Core API Endpoints Reference
 
-All routes are mounted under `/v1` by default. Below is a quick overview of primary domains:
+> **Base URL:** `/v1`
 
-| Method | Endpoint | Auth Required | Description |
-| :---: | --- | :---: | --- |
-| `POST` | `/v1/auth/register` | ❌ | Create a new user account |
-| `POST` | `/v1/auth/login` | ❌ | Authenticate and receive JWT cookie |
-| `POST` | `/v1/auth/login-google`| ❌ | Google OAuth login |
-| `GET` | `/v1/user/me` | ✅ | Fetch logged-in user profile |
-| `PUT` | `/v1/user/update` | ✅ | Update profile information |
-| `POST` | `/v1/user/favorite` | ✅ | Toggle movie in favorites list |
-| `POST` | `/v1/comment/add` | ✅ | Add a root comment or reply |
-| `GET` | `/v1/comment/:slug` | ❌ | Retrieve comments for a movie |
-| `POST` | `/v1/chatbot` | ❌ | Interact with the AI assistant |
+### Authentication & Identity
+| Method | Endpoint | Access | Description |
+| :---: | :--- | :---: | :--- |
+| `POST` | `/auth/register` | Public | Register a new user account |
+| `POST` | `/auth/login` | Public | Authenticate and issue JWT |
+| `POST` | `/auth/login-google` | Public | Authenticate via Google SSO |
 
-*(Please check the `src/routes/v1` directory for the exhaustive list of endpoints).*
+### User Domain
+| Method | Endpoint | Access | Description |
+| :---: | :--- | :---: | :--- |
+| `GET` | `/user/me` | **Private** | Retrieve active user profile |
+| `PUT` | `/user/update` | **Private** | Modify user preferences and data |
+| `POST` | `/user/favorite` | **Private** | Toggle content in favorites list |
 
-## 📦 Available Scripts
+### Social & Interaction
+| Method | Endpoint | Access | Description |
+| :---: | :--- | :---: | :--- |
+| `POST` | `/comment/add` | **Private** | Create a new comment or reply thread |
+| `GET` | `/comment/:slug` | Public | Fetch comment tree for specific content |
+| `POST` | `/chatbot` | Public | Dispatch query to AI recommendation engine |
 
-- `npm run dev`: Starts the application in development mode using `nodemon` and `babel-node`.
-- `npm run build`: Cleans the build directory and transpiles the code using Babel.
-- `npm run production`: Runs the transpiled code from the `build` directory.
-- `npm run lint`: Checks for coding standard violations using ESLint.
+*Refer to the Postman collection (if available) or the `/routes` directory for the exhaustive API documentation.*
 
-## 🤝 Contributing
+---
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Make sure tests/linters pass (`npm run lint`)
-5. Push to the Branch (`git push origin feature/AmazingFeature`)
-6. Open a Pull Request
+## 👨‍💻 Author & Maintainer
 
-## 👨‍💻 Author
+Designed and engineered by **Hieu C0bra Dev**.
 
-**Hieu C0bra Dev**
-- GitHub: [@C0braaaa](https://github.com/C0braaaa)
+*   **GitHub:** [@C0braaaa](https://github.com/C0braaaa)
