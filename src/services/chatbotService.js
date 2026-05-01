@@ -561,7 +561,7 @@ TRẢ LỜI TỰ DO (không dùng Tool):
 
   let messages = [
     { role: "system", content: systemInstruction },
-    ...cleanHistory,
+    ...cleanHistory.slice(-6),
   ];
 
   try {
