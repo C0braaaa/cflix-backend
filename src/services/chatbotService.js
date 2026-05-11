@@ -5,11 +5,6 @@ import { viewsServices } from "./viewsService";
 
 const groq = new Groq({ apiKey: env.GROQ_API_KEY });
 
-const stripFakeMarkdownLinks = (text) => {
-  if (!text) return text;
-  return text.replace(/\[([^\]]+)\]\(\/phim\/[^)]+\)/g, "$1");
-};
-
 // ===================== GENRE MAP =====================
 const GENRE_SLUG_MAP = {
   "hành động": "hanh-dong",
@@ -382,6 +377,11 @@ const callMoviesByCountryAPI = async (
       error: `Lỗi khi lấy phim quốc gia "${country}". Vui lòng thử lại sau.`,
     };
   }
+};
+
+const stripFakeMarkdownLinks = (text) => {
+  if (!text) return text;
+  return text.replace(/\[([^\]]+)\]\(\/phim\/[^)]+\)/g, "$1");
 };
 
 // ===================== FALLBACK =====================
