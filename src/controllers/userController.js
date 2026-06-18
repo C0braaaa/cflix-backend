@@ -349,38 +349,38 @@ const getProgress = async (req, res) => {
   }
 };
 
-// const getRecommendations = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
+const getRecommendations = async (req, res) => {
+  try {
+    const userId = req.user._id;
 
-//     // Lấy 10 phim xem gần nhất + 10 yêu thích
-//     const [watched, favorites] = await Promise.all([
-//       interactionModel.getInteractions(
-//         userId.toString(),
-//         "continue_watching",
-//         1,
-//         10,
-//       ),
-//       interactionModel.getInteractions(userId.toString(), "favorite", 1, 10),
-//     ]);
+    // Lấy 10 phim xem gần nhất + 10 yêu thích
+    const [watched, favorites] = await Promise.all([
+      interactionModel.getInteractions(
+        userId.toString(),
+        "continue_watching",
+        1,
+        10,
+      ),
+      interactionModel.getInteractions(userId.toString(), "favorite", 1, 10),
+    ]);
 
-//     const allItems = [...watched.items, ...favorites.items];
-//     const latestMovie = watched.items[0] || favorites.items[0] || null;
+    const allItems = [...watched.items, ...favorites.items];
+    const latestMovie = watched.items[0] || favorites.items[0] || null;
 
-//     // Đếm tần suất slug xuất hiện (slug nào xem nhiều nhất)
-//     const slugs = allItems.map((i) => i.slug);
+    // Đếm tần suất slug xuất hiện (slug nào xem nhiều nhất)
+    const slugs = allItems.map((i) => i.slug);
 
-//     res.status(200).json({
-//       status: true,
-//       data: {
-//         slugs, // FE dùng để lọc bỏ phim đã xem
-//         latestMovie, // FE dùng để lấy thể loại từ KKPhim
-//       },
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// };
+    res.status(200).json({
+      status: true,
+      data: {
+        slugs, // FE dùng để lọc bỏ phim đã xem
+        latestMovie, // FE dùng để lấy thể loại từ KKPhim
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 export const userController = {
   update,
   getAllUSers,
@@ -396,5 +396,5 @@ export const userController = {
   getContinueWatching,
   checkStatus,
   getProgress,
-  // getRecommendations,
+  getRecommendations,
 };
