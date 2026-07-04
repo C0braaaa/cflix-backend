@@ -1,187 +1,253 @@
-<div align="center">
-  <img src="https://nodejs.org/static/images/logo.svg" alt="Node.js Logo" width="180" />
-  <h1>🚀 CFLIX Core Services (Backend API)</h1>
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/Express-4.x-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+  <img src="https://img.shields.io/badge/MongoDB-7.x-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+  <img src="https://img.shields.io/badge/Socket.IO-4.x-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.IO" />
+</p>
 
-  <p align="center">
-    <strong>A highly scalable, real-time Node.js/Express REST API powering the CFLIX streaming ecosystem.</strong>
-  </p>
+# 🎬 CFlix Backend — RESTful API Server
 
-  <p align="center">
-    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Node.js-18.x-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" /></a>
-    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Express.js-4.x-404D59?style=for-the-badge&logo=express&logoColor=white" alt="Express" /></a>
-    <a href="#-tech-stack"><img src="https://img.shields.io/badge/MongoDB-7.x-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" /></a>
-    <a href="#-tech-stack"><img src="https://img.shields.io/badge/Socket.io-4.x-010101?style=for-the-badge&logo=socket.io&logoColor=white" alt="Socket.io" /></a>
-    <a href="#-tech-stack"><img src="https://img.shields.io/badge/JWT-Secure-black?style=for-the-badge&logo=JSON%20web%20tokens" alt="JWT" /></a>
-  </p>
-</div>
-
-<br />
-
-## 📖 System Overview
-
-Welcome to the **CFLIX Backend Architecture**. This repository serves as the central nervous system for the CFLIX streaming platform. Engineered for high performance and scalability, this RESTful API handles everything from secure user authentication to complex data aggregations and real-time bidirectional communication.
-
-Our architecture is built on a modern **Node.js/Express** foundation, utilizing **MongoDB** for flexible data storage and **Socket.io** for real-time interactions, ensuring a seamless and engaging experience for users worldwide.
+> Backend API cho nền tảng xem phim trực tuyến **CFlix**, xây dựng trên Node.js/Express với kiến trúc phân lớp, real-time qua Socket.IO và tích hợp AI Chatbot.
 
 ---
 
-## ✨ Enterprise-Grade Features
+## 📑 Mục lục
 
-*   **🔐 Robust Security & Auth Engine:**
-    *   State-of-the-art JWT (JSON Web Token) authentication strategy.
-    *   Secure password hashing utilizing `bcryptjs`.
-    *   Seamless Single Sign-On (SSO) via **Google OAuth 2.0**.
-    *   Rate limiting and advanced CORS protection to prevent DDoS and XSS attacks.
-*   **📡 Real-Time Communication Hub:**
-    *   Powered by `Socket.io` for instantaneous data delivery.
-    *   Live commenting systems with typing indicators.
-    *   Instant push notifications for user interactions and system alerts.
-*   **🧠 AI-Powered Insights:**
-    *   Deep integration with **Google Gemini** & **Groq SDKs**.
-    *   Intelligent chatbot for personalized movie recommendations and user support.
-*   **🏗️ Advanced Data Management:**
-    *   Complex MongoDB aggregations for content ranking and analytics.
-    *   Comprehensive user profiles: watch history tracking, custom playlists, and unified favorites management.
-    *   Hierarchical/Nestable comment threads with granular rating systems (likes/dislikes).
+- [Tổng quan](#-tổng-quan)
+- [Kiến trúc hệ thống](#-kiến-trúc-hệ-thống)
+- [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
+- [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
+- [Cài đặt & Chạy](#-cài-đặt--chạy)
+- [Biến môi trường](#-biến-môi-trường)
+- [API Endpoints](#-api-endpoints)
+- [WebSocket Events](#-websocket-events)
+- [Scripts](#-scripts)
 
 ---
 
-## 🏗️ Architecture & Tech Stack
+## 🌟 Tổng quan
 
-| Category | Technology | Description |
-| :--- | :--- | :--- |
-| **Runtime Environment** | **Node.js (v18+)** | High-performance, event-driven JavaScript runtime. |
-| **Web Framework** | **Express.js** | Fast, unopinionated, minimalist web framework. |
-| **Database & ORM** | **MongoDB & Mongoose** | NoSQL database for flexible schema design and fast querying. |
-| **Real-Time Engine** | **Socket.IO** | Bi-directional communication between web clients and servers. |
-| **Data Validation** | **Joi** | Powerful schema description language and data validator. |
-| **Security Suite** | **JWT, bcryptjs, Helmet** | Comprehensive security mechanisms and encryption. |
-| **AI Integration** | **@google/generative-ai** | Generative AI models for enhanced user experiences. |
+CFlix Backend cung cấp đầy đủ API cho nền tảng xem phim:
+
+- **Xác thực** — Email + Google OAuth 2.0, JWT, quên mật khẩu
+- **Người dùng** — Hồ sơ, yêu thích, lịch sử xem, phân quyền admin
+- **Bình luận** — CRUD comment real-time qua Socket.IO
+- **Đánh giá** — Rating phim 1–10 sao
+- **Slider** — CRUD banner trang chủ (admin)
+- **Trending** — Thống kê lượt xem, danh sách trending
+- **AI Chatbot** — Tích hợp Google Gemini & Groq AI gợi ý phim
+- **Thông báo** — Notification real-time
+- **Báo cáo** — Người dùng báo cáo phim lỗi/vi phạm
+- **Traffic** — Thống kê truy cập hàng ngày
+- **Chặn phim** — Quản lý blacklist phim (admin)
 
 ---
 
-## 📂 Codebase Anatomy
+## 🏛 Kiến trúc hệ thống
 
-We enforce a strict separation of concerns following the MVC (Model-View-Controller) architectural pattern adapted for API design:
+Mô hình **3-Layer Architecture**:
 
-```text
-cflix-backend/
-├── src/
-│   ├── config/          # Environment configuration, DB connections & third-party setup
-│   ├── controllers/     # Application logic and request/response handling
-│   ├── middlewares/     # Custom pipeline steps (Auth, Error handling, Rate Limits)
-│   ├── models/          # MongoDB Mongoose schemas and data access layer
-│   ├── routes/          # RESTful API route definitions (v1)
-│   ├── services/        # Heavy lifting and core business logic
-│   ├── sockets/         # WebSocket event listeners and emitters
-│   ├── utils/           # Shared utilities (Nodemailer, token generators, formatters)
-│   ├── validations/     # Joi validation schemas for strict payload checking
-│   └── server.js        # Application bootstrap and entry point
-├── .env.example         # Template for environment variables
-└── package.json         # Dependency management and script definitions
+```
+Client Request
+      │
+      ▼
+┌─────────────┐
+│   Routes    │  ← Endpoints + Middleware
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│ Controllers │  ← Request/Response handling
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│  Services   │  ← Business logic + DB queries
+└──────┬──────┘
+       ▼
+┌─────────────┐
+│   Models    │  ← MongoDB schema + data access
+└─────────────┘
 ```
 
 ---
 
-## 🚀 Quick Start Guide
+## 🛠 Công nghệ sử dụng
 
-### 1. Prerequisites
+| Công nghệ | Mô tả |
+|---|---|
+| **Node.js** ≥ 18 | Runtime JavaScript |
+| **Express.js** 4.x | Web framework |
+| **MongoDB** Native Driver 7.x | NoSQL Database (Atlas) |
+| **Socket.IO** 4.x | Real-time WebSocket |
+| **JWT** + **bcryptjs** | Auth & mã hoá password |
+| **Joi** | Validate dữ liệu |
+| **Google Auth Library** | Google OAuth 2.0 |
+| **Google Generative AI** | Gemini AI Chatbot |
+| **Groq SDK** | Groq AI |
+| **Nodemailer** | Gửi email |
+| **Babel** + **Nodemon** | Transpile ES Modules + Hot-reload |
+| **express-rate-limit** | Chống DDoS/brute-force |
 
-Ensure your development environment meets the following requirements:
-*   **Node.js**: `v18.0.0` or higher
-*   **MongoDB**: Local instance running on port `27017` or a MongoDB Atlas URI.
-*   **Package Manager**: `npm`, `yarn`, or `pnpm`.
+---
 
-### 2. Installation
+## 📂 Cấu trúc thư mục
 
-Clone the repository and install the necessary dependencies:
+```
+backend/
+├── .babelrc                  # Babel config (preset-env, module-resolver)
+├── .env                      # Biến môi trường (không commit)
+├── jsconfig.json             # Alias path (~/ → ./src/)
+├── package.json
+└── src/
+    ├── server.js             # Entry point
+    ├── config/
+    │   ├── environment.js    # Export biến môi trường
+    │   ├── mongodb.js        # Kết nối MongoDB Atlas
+    │   └── cors.js           # Cấu hình CORS
+    ├── routes/v1/
+    │   ├── index.js          # Mount tất cả sub-routes
+    │   ├── authRoute.js      # /v1/auth
+    │   ├── userRoute.js      # /v1/user
+    │   ├── commentRoute.js   # /v1/comment
+    │   ├── ratingRoute.js    # /v1/rating
+    │   ├── viewsRoute.js     # /v1/trending
+    │   ├── sliderRoute.js    # /v1/slider
+    │   ├── notificationRoute.js
+    │   ├── chatbotRoute.js   # /v1/chatbot
+    │   ├── reportRoute.js    # /v1/report
+    │   ├── trafficRoute.js   # /v1/traffic
+    │   └── blockedMovieRoute.js
+    ├── controllers/          # Xử lý request/response
+    ├── services/             # Business logic
+    ├── models/               # MongoDB schema & data access
+    ├── middlewares/
+    │   ├── authMiddleware.js     # JWT verification
+    │   └── rateLimitMiddleware.js
+    ├── validations/
+    │   └── authValidations.js    # Joi schema
+    └── utils/
+        └── email.js              # Email utility
+```
+
+---
+
+## 🚀 Cài đặt & Chạy
+
+### Yêu cầu
+
+- **Node.js** ≥ 18.x
+- **npm** ≥ 9.x
+- **MongoDB Atlas** account (hoặc MongoDB local)
+
+### Cài đặt
 
 ```bash
-git clone https://github.com/C0braaaa/cflix-backend.git
-cd cflix-backend
+# 1. Clone repository
+git clone <repository-url>
+cd cflix-v2/backend
+
+# 2. Cài đặt dependencies
 npm install
-```
 
-### 3. Environment Configuration
-
-Copy the example environment file and configure your local variables:
-
-```bash
+# 3. Tạo file .env (xem mục bên dưới)
 cp .env.example .env
-```
+# Điền đầy đủ thông tin vào .env
 
-*Update `.env` with your specific credentials:*
-
-```env
-# Server Configuration
-APP_HOST=0.0.0.0
-APP_PORT=5001
-CLIENT_URL=http://localhost:5173
-
-# Database Connection
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net
-DATABASE_NAME=cflix_production
-
-# Security & Authentication
-JWT_SECRET=generate_a_strong_random_string_here
-GOOGLE_CLIENT_ID=your_google_cloud_oauth_client_id
-
-# Mail Service (SMTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
-
-# Artificial Intelligence Integrations
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-### 4. Launching the Server
-
-**For Local Development (with Hot Reload):**
-```bash
+# 4. Chạy development server
 npm run dev
 ```
 
-**For Production Deployment:**
-```bash
-npm run build
-npm run production
+Server chạy tại: **http://localhost:5001**
+
+---
+
+## 🔐 Biến môi trường
+
+Tạo file `.env` tại thư mục gốc `backend/`:
+
+```env
+# ─── Database ───────────────────────────
+MONGODB_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/
+DATABASE_NAME=cflixDb
+
+# ─── Server ─────────────────────────────
+APP_HOST=localhost
+APP_PORT=5001
+CLIENT_URL=http://localhost:5000
+
+# ─── Authentication ─────────────────────
+GOOGLE_CLIENT_ID=<your-google-client-id>
+JWT_SECRET=<your-jwt-secret>
+
+# ─── Email (SMTP) ───────────────────────
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=<your-email>
+SMTP_PASS=<your-smtp-password>
+
+# ─── AI Services ────────────────────────
+GEMINI_API_KEY=<your-gemini-key>
+GROQ_API_KEY=<your-groq-key>
+
+# ─── Misc ───────────────────────────────
+RESEND_API_KEY=<your-resend-key>
 ```
 
----
-
-## 📡 Core API Endpoints Reference
-
-> **Base URL:** `/v1`
-
-### Authentication & Identity
-| Method | Endpoint | Access | Description |
-| :---: | :--- | :---: | :--- |
-| `POST` | `/auth/register` | Public | Register a new user account |
-| `POST` | `/auth/login` | Public | Authenticate and issue JWT |
-| `POST` | `/auth/login-google` | Public | Authenticate via Google SSO |
-
-### User Domain
-| Method | Endpoint | Access | Description |
-| :---: | :--- | :---: | :--- |
-| `GET` | `/user/me` | **Private** | Retrieve active user profile |
-| `PUT` | `/user/update` | **Private** | Modify user preferences and data |
-| `POST` | `/user/favorite` | **Private** | Toggle content in favorites list |
-
-### Social & Interaction
-| Method | Endpoint | Access | Description |
-| :---: | :--- | :---: | :--- |
-| `POST` | `/comment/add` | **Private** | Create a new comment or reply thread |
-| `GET` | `/comment/:slug` | Public | Fetch comment tree for specific content |
-| `POST` | `/chatbot` | Public | Dispatch query to AI recommendation engine |
-
-*Refer to the Postman collection (if available) or the `/routes` directory for the exhaustive API documentation.*
+> ⚠️ File `.env` đã nằm trong `.gitignore`. Không commit file này lên repository.
 
 ---
 
-## 👨‍💻 Author & Maintainer
+## 📡 API Endpoints
 
-Designed and engineered by **Hieu C0bra Dev**.
+Prefix chung: `/v1`
 
-*   **GitHub:** [@C0braaaa](https://github.com/C0braaaa)
+| Module | Prefix | Chức năng chính |
+|---|---|---|
+| **Auth** | `/v1/auth` | Đăng ký, đăng nhập, Google OAuth, quên mật khẩu, đăng xuất |
+| **User** | `/v1/user` | Profile, favorites, history, quản lý user (admin) |
+| **Slider** | `/v1/slider` | CRUD banner trang chủ |
+| **Comment** | `/v1/comment` | Bình luận theo slug phim (real-time) |
+| **Rating** | `/v1/rating` | Đánh giá phim |
+| **Trending** | `/v1/trending` | Lượt xem, danh sách trending |
+| **Notification** | `/v1/notifications` | Thông báo real-time |
+| **Chatbot** | `/v1/chatbot` | AI chatbot gợi ý phim |
+| **Report** | `/v1/report` | Báo cáo phim lỗi |
+| **Traffic** | `/v1/traffic` | Thống kê truy cập |
+| **Blocked Movie** | `/v1/movie` | Chặn/bỏ chặn phim (admin) |
+
+### Xác thực & Phân quyền
+
+- **JWT** lưu trong HTTP-Only Cookie
+- **Auth Middleware** kiểm tra token hợp lệ
+- **Role-based** phân quyền `user` / `admin`
+- **Rate Limiting** chống brute-force
+
+---
+
+## 🔌 WebSocket Events
+
+| Event | Hướng | Mô tả |
+|---|---|---|
+| `connection` | Client → Server | Kết nối mới |
+| `disconnect` | Client → Server | Ngắt kết nối |
+| `join_room` | Client → Server | Tham gia room theo slug phim |
+| `join_user_room` | Client → Server | Tham gia room cá nhân |
+| `req_online_users` | Client → Server | Yêu cầu số người online |
+| `online_users` | Server → Client | Broadcast số người online |
+
+---
+
+## 📜 Scripts
+
+| Script | Mô tả |
+|---|---|
+| `npm run dev` | Dev server (Nodemon + Babel) |
+| `npm run build` | Build production (→ `build/`) |
+| `npm run production` | Build + chạy production |
+| `npm run lint` | Kiểm tra ESLint |
+| `npm run clean` | Xoá thư mục `build/` |
+
+---
+
+<p align="center">
+  <sub>Built with ❤️ by C0bra — CFlix Backend v1.0.0</sub>
+</p>
